@@ -23,28 +23,46 @@
     </properties>
 
     <dependencies>
-        <!-- 核心 Web 依赖 -->
+        <!-- 依赖按架构分层排列：接口层 → 基础设施 → 共享支撑 → 编译期增强 → 测试；新增依赖归入对应分组，不追加到末尾 -->
+        <!-- 接口层 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        <!-- 测试依赖 -->
+
+        <!-- 基础设施 -->
+        <!-- MyBatis-Plus：Spring Boot 4.x 专用 starter -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
+            <version>3.5.16</version>
         </dependency>
-        <!-- Lombok -->
+        <!-- H2 内存库，开箱即用 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- 共享支撑 -->
+        <!-- StringUtils 防腐层的底层实现（版本由 Spring Boot BOM 管理） -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <!-- 编译期增强 -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- Apache Commons Lang3（StringUtils 防腐层的底层实现，版本由 Spring Boot BOM 管理） -->
+        <!-- 测试 -->
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

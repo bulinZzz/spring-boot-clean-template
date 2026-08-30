@@ -115,7 +115,7 @@ infrastructure/persistence/impl/OrderRepositoryImpl.java (Spring @Repository + M
 
 > 规则按价值从高到低排序：影响 AI 工作方式的元规则 > 架构判据 > 风格约定。
 
-### 规则 1：AI 导航协议（增量上下文，禁止全量通读）
+### 规则 1：AI 导航协议
 
 为控制上下文成本，AI 助手按需增量导航，禁止非必要的全量代码通读：
 
@@ -130,9 +130,13 @@ infrastructure/persistence/impl/OrderRepositoryImpl.java (Spring @Repository + M
 * **边界层宽松**：外部数据边界层（Controller / DTO / MQ Listener / RPC Client / Job 入参）面对未校验的外部输入，可依赖防腐层提供 null 安全契约的方法。
 * **内部层严格**：Service / Domain / Infrastructure 禁止隐式 null 吞没——预期非空则快速失败，已断言非空用 JDK 原生方法，可选语义显式表达。
 
-### 规则 3：注释与命名
+### 规则 3：注释与命名规范
 
 代码注释与 Javadoc 统一使用中文；命名遵循标准 Java 驼峰。
+
+### 规则 4：文档成稿原则
+
+注释与文档修改后不留过程痕迹——不出现"原先""已删除""由 X 改为 Y"之类的修订叙述，删改与方案变更一律按最终意图重新表达，成品读来应如初次写下；历史追溯交给 Git。
 
 ---
 

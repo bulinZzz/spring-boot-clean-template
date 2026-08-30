@@ -31,8 +31,6 @@ import org.jspecify.annotations.Nullable;
  * 方法集按需新增、不预先穷举封装，新增方法须同步声明 null 契约并附中文 Javadoc。
  * 本类声明 {@link NullMarked}：除显式标注 {@code @Nullable} 的参数与返回值外，
  * 其余参数与返回值均视为非 {@code null}。本类为无状态实现，线程安全。</p>
- *
- * @author bulinZzz
  */
 @NullMarked
 public final class CollectionUtils {

@@ -1,0 +1,45 @@
+package com.xingyun.template.module.example.infrastructure.persistence.impl;
+
+import com.xingyun.template.module.example.domain.model.ExampleId;
+import com.xingyun.template.module.example.domain.model.ExampleModel;
+import com.xingyun.template.module.example.domain.repository.ExampleRepository;
+import com.xingyun.template.module.example.infrastructure.persistence.converter.ExampleConverter;
+import com.xingyun.template.module.example.infrastructure.persistence.entity.ExamplePO;
+import com.xingyun.template.module.example.infrastructure.persistence.mapper.ExampleMapper;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+/**
+ * 仓储契约的基础设施实现：经 Converter 完成 PO 与领域模型互转后，委托 Mapper 持久化。
+ */
+@Repository
+public class ExampleRepositoryImpl implements ExampleRepository {
+
+    private final ExampleMapper exampleMapper;
+    private final ExampleConverter exampleConverter;
+
+    public ExampleRepositoryImpl(ExampleMapper exampleMapper, ExampleConverter exampleConverter) {
+        this.exampleMapper = exampleMapper;
+        this.exampleConverter = exampleConverter;
+    }
+
+    @Override
+    public Optional<ExampleModel> findById(ExampleId id) {
+        ExamplePO po = exampleMapper.selectById(id.value());
+        return Optional.ofNullable(exampleConverter.toDomain(po));
+    }
+
+    @Override
+    public ExampleModel save(ExampleModel exampleModel) {
+        ExamplePO po = exampleConverter.toPO(exampleModel);
+        if (po.getId() == null) {
+            // 新增：主键为数据库自增策略，insert 后由框架回填至 PO
+            exampleMapper.insert(po);
+        } else {
+            exampleMapper.updateById(po);
+        }
+        // 将持久化结果（含回填主键）转回领域模型，保证调用方拿到与存储一致的聚合状态
+        return exampleConverter.toDomain(po);
+    }
+}

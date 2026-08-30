@@ -36,7 +36,8 @@
 com.xingyun.template
 ├── shared                                  // 全局共享层 (不含业务语义，供所有模块复用)
 │   ├── domain                              // 全局通用值对象 (例如: DateRange, Money 等纯 Java 值对象)
-│   └── util                                // 工具防腐层 (统一封装第三方工具库，依赖与类型不外泄，契约见 AGENTS.md §6 规则 2)
+│   ├── util                                // 工具防腐层 (统一封装第三方工具库，依赖与类型不外泄，契约见 AGENTS.md §6 规则 2)
+│   └── integration                         // 跨模块共用技术连接器 (例如: Redis 连接装配；准入判据: ≥2 个模块真实消费)
 │
 └── module                                  // 业务领域模块根目录
     └── [domain_name]                       // 具体业务领域 (例如: example, payment)
@@ -76,18 +77,53 @@ com.xingyun.template
 
 ## 3. 标准代码规范
 
-以 `example` 模块为例，给出各层标准写法。
+以 `example` 模块为例，给出各层标准写法（可运行的完整代码见 `module/example/`，含 H2 建表脚本与单元测试）。
 
-> 示例以 MyBatis-Plus 书写，从简以 `Long` 传递标识；正式契约推荐 record 强类型 ID，生成偏好见 [AGENTS.md §5](./AGENTS.md#5-代码生成偏好)。本模板不预设 ORM 依赖，引入其他框架时仅需调整 PO 注解，分层结构与转换契约不变。
+> 示例与 `module/example/` 逐字镜像，修订先改本文档、代码跟随。持久化以 MyBatis-Plus 书写（依赖与 H2 内存库已随模板引入，开箱即用）；更换其他 ORM 时仅需调整 PO 注解与 Mapper 声明，分层结构与转换契约不变。标识以 record 强类型 `ExampleId` 传递，生成偏好见 [AGENTS.md §5](./AGENTS.md#5-代码生成偏好)。
 
-### 3.1 领域层：充血聚合根 (`domain/model/ExampleModel.java`)
+### 3.1 领域层：强类型标识 (`domain/model/ExampleId.java`)
 
 ```java
 package com.xingyun.template.module.example.domain.model;
 
 import java.util.Objects;
 
+/**
+ * 示例聚合的强类型标识：以专属类型隔离不同实体的裸值，杜绝标识混传。
+ */
+public record ExampleId(Long value) {
+
+    public ExampleId {
+        Objects.requireNonNull(value, "标识值不能为 null");
+    }
+}
+```
+
+### 3.2 领域层：领域业务异常 (`domain/exception/ExampleRenameException.java`)
+
+```java
+package com.xingyun.template.module.example.domain.exception;
+
+/**
+ * 领域业务异常：重命名违反聚合根业务规则时抛出。
+ */
+public class ExampleRenameException extends RuntimeException {
+
+    public ExampleRenameException(String message) {
+        super(message);
+    }
+}
+```
+
+### 3.3 领域层：充血聚合根 (`domain/model/ExampleModel.java`)
+
+```java
+package com.xingyun.template.module.example.domain.model;
+
+import com.xingyun.template.module.example.domain.exception.ExampleRenameException;
 import lombok.Getter;
+
+import java.util.Objects;
 
 /**
  * 示例聚合根：业务校验与状态变更内聚于此（充血模型，禁含框架注解）。
@@ -95,31 +131,31 @@ import lombok.Getter;
 @Getter
 public class ExampleModel {
 
-    private final Long id;
-    private String name;
+    private final ExampleId id;
     private final String code;
+    private String name;
 
-    private ExampleModel(Long id, String name, String code) {
+    private ExampleModel(ExampleId id, String code, String name) {
         this.id = id;
-        this.name = name;
         this.code = code;
+        this.name = name;
     }
 
     /**
      * 创建聚合根：新聚合无主键，由仓储 save 后回填。
      */
-    public static ExampleModel create(String name, String code) {
-        Objects.requireNonNull(name, "name 不能为 null");
+    public static ExampleModel create(String code, String name) {
         Objects.requireNonNull(code, "code 不能为 null");
-        return new ExampleModel(null, name, code);
+        Objects.requireNonNull(name, "name 不能为 null");
+        return new ExampleModel(null, code, name);
     }
 
     /**
-     * 从持久化状态重建聚合根：携带主键，供 Converter 从 PO 还原时调用。
+     * 从持久化状态重建聚合根：携带主键，供仓储实现还原聚合时调用。
      */
-    public static ExampleModel reconstitute(Long id, String name, String code) {
+    public static ExampleModel reconstitute(ExampleId id, String code, String name) {
         Objects.requireNonNull(id, "id 不能为 null");
-        return new ExampleModel(id, name, code);
+        return new ExampleModel(id, code, name);
     }
 
     /**
@@ -134,19 +170,25 @@ public class ExampleModel {
 }
 ```
 
-### 3.2 领域层：仓储契约 (`domain/repository/ExampleRepository.java`)
+### 3.4 领域层：仓储契约 (`domain/repository/ExampleRepository.java`)
 
 ```java
 package com.xingyun.template.module.example.domain.repository;
 
+import com.xingyun.template.module.example.domain.model.ExampleId;
 import com.xingyun.template.module.example.domain.model.ExampleModel;
+
 import java.util.Optional;
 
 /**
  * 示例聚合根的仓储契约（纯 Java Interface，仅依赖领域模型）。
  */
 public interface ExampleRepository {
-    Optional<ExampleModel> findById(Long id);
+
+    /**
+     * 按标识查询聚合根，不存在时返回 {@code empty}。
+     */
+    Optional<ExampleModel> findById(ExampleId id);
 
     /**
      * 保存聚合根，返回持久化后的领域模型（含回填的主键）。
@@ -155,34 +197,88 @@ public interface ExampleRepository {
 }
 ```
 
-### 3.3 基础设施层：物理表 PO (`infrastructure/persistence/entity/ExamplePO.java`)
+### 3.5 基础设施层：物理表 PO (`infrastructure/persistence/entity/ExamplePO.java`)
 
 ```java
 package com.xingyun.template.module.example.infrastructure.persistence.entity;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * t_example 表的物理表 PO，仅存在于基础设施持久化层，禁止外泄。
  */
-@Data
+@Getter
+@Setter
 @TableName("t_example")
 public class ExamplePO {
+
     @TableId
     private Long id;
-    private String name;
     private String code;
-    private Integer status;
+    private String name;
 }
 ```
 
-### 3.4 基础设施层：仓储实现 (`infrastructure/persistence/impl/ExampleRepositoryImpl.java`)
+### 3.6 基础设施层：Mapper 与转换器 (`persistence/mapper/`、`persistence/converter/`)
+
+```java
+package com.xingyun.template.module.example.infrastructure.persistence.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.xingyun.template.module.example.infrastructure.persistence.entity.ExamplePO;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * t_example 表的 Mapper：继承 BaseMapper 获得通用 CRUD，不写 SQL。
+ */
+@Mapper
+public interface ExampleMapper extends BaseMapper<ExamplePO> {
+}
+```
+
+```java
+package com.xingyun.template.module.example.infrastructure.persistence.converter;
+
+import com.xingyun.template.module.example.domain.model.ExampleId;
+import com.xingyun.template.module.example.domain.model.ExampleModel;
+import com.xingyun.template.module.example.infrastructure.persistence.entity.ExamplePO;
+import org.springframework.stereotype.Component;
+
+/**
+ * ExamplePO ↔ ExampleModel 双向转换器：标识值在此完成 Long ↔ ExampleId 互转。
+ */
+@Component
+public class ExampleConverter {
+
+    /**
+     * PO 转领域模型：要求 PO 已携带主键（insert 回填后调用）。
+     */
+    public ExampleModel toDomain(ExamplePO po) {
+        return ExampleModel.reconstitute(new ExampleId(po.getId()), po.getCode(), po.getName());
+    }
+
+    /**
+     * 领域模型转 PO：新聚合的空标识映射为 null 主键，交给数据库自增。
+     */
+    public ExamplePO toPO(ExampleModel model) {
+        ExamplePO po = new ExamplePO();
+        po.setId(model.getId() == null ? null : model.getId().value());
+        po.setCode(model.getCode());
+        po.setName(model.getName());
+        return po;
+    }
+}
+```
+
+### 3.7 基础设施层：仓储实现 (`infrastructure/persistence/impl/ExampleRepositoryImpl.java`)
 
 ```java
 package com.xingyun.template.module.example.infrastructure.persistence.impl;
 
+import com.xingyun.template.module.example.domain.model.ExampleId;
 import com.xingyun.template.module.example.domain.model.ExampleModel;
 import com.xingyun.template.module.example.domain.repository.ExampleRepository;
 import com.xingyun.template.module.example.infrastructure.persistence.converter.ExampleConverter;
@@ -207,8 +303,8 @@ public class ExampleRepositoryImpl implements ExampleRepository {
     }
 
     @Override
-    public Optional<ExampleModel> findById(Long id) {
-        ExamplePO po = exampleMapper.selectById(id);
+    public Optional<ExampleModel> findById(ExampleId id) {
+        ExamplePO po = exampleMapper.selectById(id.value());
         return Optional.ofNullable(exampleConverter.toDomain(po));
     }
 
@@ -227,12 +323,36 @@ public class ExampleRepositoryImpl implements ExampleRepository {
 }
 ```
 
-### 3.5 公开契约层：对外契约与应用服务实现 (`api/`、`application/service/`)
+### 3.8 公开契约层：对外契约与应用服务实现 (`api/`、`application/service/`)
 
-单契约模式：`api` 包的服务接口即应用服务接口，实现类位于 `application/service`；契约 DTO 为 `record`（如 `ExampleCreateCommand(String name, String code)`），词根即分组、平铺不设子包，判据见 [AGENTS.md §3](./AGENTS.md#3-数据模型隔离)。
+单契约模式：`api` 包的服务接口即应用服务接口，实现类位于 `application/service`；契约 DTO 为 `record`、词根即分组、平铺不设子包，出参以强类型标识出契约，允许引用本模块 domain 值语义类型，判据见 [AGENTS.md §3](./AGENTS.md#3-数据模型隔离)。
 
 ```java
 package com.xingyun.template.module.example.api;
+
+/**
+ * 创建示例聚合的入参契约。
+ */
+public record ExampleCreateCommand(String code, String name) {
+}
+```
+
+```java
+package com.xingyun.template.module.example.api;
+
+import com.xingyun.template.module.example.domain.model.ExampleId;
+
+/**
+ * 示例聚合的出参契约。
+ */
+public record ExampleResult(ExampleId id, String code, String name) {
+}
+```
+
+```java
+package com.xingyun.template.module.example.api;
+
+import com.xingyun.template.module.example.domain.model.ExampleId;
 
 import java.util.Optional;
 
@@ -241,8 +361,22 @@ import java.util.Optional;
  */
 public interface ExampleApi {
 
-    Optional<ExampleResult> findById(Long id);
+    /**
+     * 按标识查询示例聚合。
+     *
+     * @param id 聚合标识，不得为 {@code null}
+     * @return 命中时返回出参契约；不存在时返回 {@code empty}
+     */
+    Optional<ExampleResult> findById(ExampleId id);
 
+    /**
+     * 创建并保存示例聚合。
+     *
+     * <p>{@code name} / {@code code} 不得为 {@code null}（编程契约，快速失败）。</p>
+     *
+     * @param command 创建入参
+     * @return 携带主键的出参契约
+     */
     ExampleResult create(ExampleCreateCommand command);
 }
 ```
@@ -253,6 +387,7 @@ package com.xingyun.template.module.example.application.service;
 import com.xingyun.template.module.example.api.ExampleApi;
 import com.xingyun.template.module.example.api.ExampleCreateCommand;
 import com.xingyun.template.module.example.api.ExampleResult;
+import com.xingyun.template.module.example.domain.model.ExampleId;
 import com.xingyun.template.module.example.domain.model.ExampleModel;
 import com.xingyun.template.module.example.domain.repository.ExampleRepository;
 import org.springframework.stereotype.Service;
@@ -260,7 +395,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 /**
- * ExampleApi 的应用服务实现：编排用例流程与事务，内聚契约 DTO ↔ 领域模型转换。
+ * ExampleApi 的应用服务实现：编排用例流程，内聚契约 DTO ↔ 领域模型转换。
  */
 @Service
 public class ExampleApiImpl implements ExampleApi {
@@ -272,19 +407,19 @@ public class ExampleApiImpl implements ExampleApi {
     }
 
     @Override
-    public Optional<ExampleResult> findById(Long id) {
+    public Optional<ExampleResult> findById(ExampleId id) {
         return exampleRepository.findById(id).map(ExampleApiImpl::toResult);
     }
 
     @Override
     public ExampleResult create(ExampleCreateCommand command) {
-        ExampleModel model = ExampleModel.create(command.name(), command.code());
+        ExampleModel model = ExampleModel.create(command.code(), command.name());
         return toResult(exampleRepository.save(model));
     }
 
     // 契约 DTO ↔ 领域模型转换内聚于实现类，单向小映射不为它增设独立转换器
     private static ExampleResult toResult(ExampleModel model) {
-        return new ExampleResult(model.getId(), model.getName(), model.getCode());
+        return new ExampleResult(model.getId(), model.getCode(), model.getName());
     }
 }
 ```
