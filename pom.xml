@@ -25,6 +25,11 @@
     <dependencies>
         <!-- 依赖按架构分层排列：接口层 → 基础设施 → 共享支撑 → 编译期增强 → 测试；新增依赖归入对应分组，不追加到末尾 -->
         <!-- 接口层 -->
+        <!-- Bean Validation：@NotBlank 等校验注解的实现；web starter 不传递，需显式声明 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -42,6 +47,11 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <!-- H2 Web 控制台自动配置：位于独立模块，缺它则 spring.h2.console.enabled 不生效 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-h2console</artifactId>
         </dependency>
 
         <!-- 共享支撑 -->

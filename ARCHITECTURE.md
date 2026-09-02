@@ -49,8 +49,7 @@ com.xingyun.template
         ├── domain                          // 💎 [1. 核心领域层] (纯业务逻辑，依赖封闭)
         │   ├── model                       // 领域模型 / 聚合根 (包含核心业务行为与状态)
         │   ├── repository                  // 仓储接口契约 (纯 Interface，定义持久化能力)
-        │   ├── service                     // 核心领域服务 (跨聚合根的纯业务逻辑)
-        │   └── exception                   // 领域业务异常
+        │   └── service                     // 核心领域服务 (跨聚合根的纯业务逻辑)
         │
         ├── application                     // 🟧 [2. 应用编排层] (应用用例实现)
         │   ├── service                     // 应用服务实现类 (实现本模块 api 包接口，内聚契约 DTO ↔ 领域模型转换)
@@ -70,16 +69,16 @@ com.xingyun.template
                 ├── controller              // Spring RestController
                 ├── request                 // 入参 Request DTO (携带校验注解)
                 ├── response                // 出参 Response VO
-                └── assembler               // Request/Response ↔ Command/Domain 转换器
+│               └── assembler               // Request/Response ↔ Command/Result 转换器
 ```
 
 ---
 
 ## 3. 标准代码规范
 
-以 `example` 模块为例，给出各层标准写法（可运行的完整代码见 `module/example/`，含 H2 建表脚本与单元测试）。
+以 `example` 模块为例，给出各层标准写法（可运行的完整代码见 `module/example/`，含建表脚本与单元测试）。
 
-> 示例与 `module/example/` 逐字镜像，修订先改本文档、代码跟随。持久化以 MyBatis-Plus 书写（依赖与 H2 内存库已随模板引入，开箱即用）；更换其他 ORM 时仅需调整 PO 注解与 Mapper 声明，分层结构与转换契约不变。标识以 record 强类型 `ExampleId` 传递，生成偏好见 [AGENTS.md §5](./AGENTS.md#5-代码生成偏好)。
+> 示例与 `module/example/` 逐字镜像，修订先改本文档、代码跟随。持久化以 MyBatis-Plus 书写（示例存储使用内嵌数据库 H2，构成、使用与移除见文末附录）；更换其他 ORM 时仅需调整 PO 注解与 Mapper 声明，分层结构与转换契约不变。标识以 record 强类型 `ExampleId` 传递，生成偏好见 [AGENTS.md §5](./AGENTS.md#5-代码生成偏好)。
 
 ### 3.1 领域层：强类型标识 (`domain/model/ExampleId.java`)
 
@@ -99,28 +98,11 @@ public record ExampleId(Long value) {
 }
 ```
 
-### 3.2 领域层：领域业务异常 (`domain/exception/ExampleRenameException.java`)
-
-```java
-package com.xingyun.template.module.example.domain.exception;
-
-/**
- * 领域业务异常：重命名违反聚合根业务规则时抛出。
- */
-public class ExampleRenameException extends RuntimeException {
-
-    public ExampleRenameException(String message) {
-        super(message);
-    }
-}
-```
-
-### 3.3 领域层：充血聚合根 (`domain/model/ExampleModel.java`)
+### 3.2 领域层：充血聚合根 (`domain/model/ExampleModel.java`)
 
 ```java
 package com.xingyun.template.module.example.domain.model;
 
-import com.xingyun.template.module.example.domain.exception.ExampleRenameException;
 import lombok.Getter;
 
 import java.util.Objects;
@@ -159,18 +141,18 @@ public class ExampleModel {
     }
 
     /**
-     * 重命名：业务规则校验内聚于聚合根，失败抛领域业务异常（定义于 domain/exception/）。
+     * 重命名：同名拒绝。
      */
     public void rename(String newName) {
         if (name.equals(newName)) {
-            throw new ExampleRenameException("新名称与当前名称相同");
+            throw new IllegalStateException("新名称与当前名称相同");
         }
         this.name = newName;
     }
 }
 ```
 
-### 3.4 领域层：仓储契约 (`domain/repository/ExampleRepository.java`)
+### 3.3 领域层：仓储契约 (`domain/repository/ExampleRepository.java`)
 
 ```java
 package com.xingyun.template.module.example.domain.repository;
@@ -197,11 +179,12 @@ public interface ExampleRepository {
 }
 ```
 
-### 3.5 基础设施层：物理表 PO (`infrastructure/persistence/entity/ExamplePO.java`)
+### 3.4 基础设施层：物理表 PO (`infrastructure/persistence/entity/ExamplePO.java`)
 
 ```java
 package com.xingyun.template.module.example.infrastructure.persistence.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
@@ -215,14 +198,15 @@ import lombok.Setter;
 @TableName("t_example")
 public class ExamplePO {
 
-    @TableId
+    // 主键由数据库自增生成，insert 后由框架回填（不指定时 MyBatis-Plus 默认走雪花算法）
+    @TableId(type = IdType.AUTO)
     private Long id;
     private String code;
     private String name;
 }
 ```
 
-### 3.6 基础设施层：Mapper 与转换器 (`persistence/mapper/`、`persistence/converter/`)
+### 3.5 基础设施层：Mapper 与转换器 (`persistence/mapper/`、`persistence/converter/`)
 
 ```java
 package com.xingyun.template.module.example.infrastructure.persistence.mapper;
@@ -273,7 +257,7 @@ public class ExampleConverter {
 }
 ```
 
-### 3.7 基础设施层：仓储实现 (`infrastructure/persistence/impl/ExampleRepositoryImpl.java`)
+### 3.6 基础设施层：仓储实现 (`infrastructure/persistence/impl/ExampleRepositoryImpl.java`)
 
 ```java
 package com.xingyun.template.module.example.infrastructure.persistence.impl;
@@ -305,7 +289,8 @@ public class ExampleRepositoryImpl implements ExampleRepository {
     @Override
     public Optional<ExampleModel> findById(ExampleId id) {
         ExamplePO po = exampleMapper.selectById(id.value());
-        return Optional.ofNullable(exampleConverter.toDomain(po));
+        // 未命中直接返回 empty：Converter 契约要求 PO 非空，判空责任在仓储
+        return po == null ? Optional.empty() : Optional.of(exampleConverter.toDomain(po));
     }
 
     @Override
@@ -323,7 +308,7 @@ public class ExampleRepositoryImpl implements ExampleRepository {
 }
 ```
 
-### 3.8 公开契约层：对外契约与应用服务实现 (`api/`、`application/service/`)
+### 3.7 公开契约层：对外契约与应用服务实现 (`api/`、`application/service/`)
 
 单契约模式：`api` 包的服务接口即应用服务接口，实现类位于 `application/service`；契约 DTO 为 `record`、词根即分组、平铺不设子包，出参以强类型标识出契约，允许引用本模块 domain 值语义类型，判据见 [AGENTS.md §3](./AGENTS.md#3-数据模型隔离)。
 
@@ -423,3 +408,160 @@ public class ExampleApiImpl implements ExampleApi {
     }
 }
 ```
+
+### 3.8 Web 层：HTTP 适配器 (`infrastructure/web/`)
+
+Controller 只做协议转换与 HTTP 语义（状态码、Location），用例编排委托 `api` 契约；Request 携带 Bean Validation 注解止步于 Web 层（校验失败由框架返回 400；`spring-boot-starter-validation` 需显式引入，web starter 不传递校验实现），Response 以裸值出 HTTP 边界；两者经 `Assembler` 与契约 DTO 互转（见 AGENTS.md §3 表格）。
+
+```java
+package com.xingyun.template.module.example.infrastructure.web.request;
+
+import jakarta.validation.constraints.NotBlank;
+
+/**
+ * 创建示例聚合的 HTTP 入参：Bean Validation 注解止步于 Web 层，不向内传递。
+ */
+public record ExampleCreateRequest(
+        @NotBlank(message = "code 不能为空")
+        String code,
+        @NotBlank(message = "name 不能为空")
+        String name) {
+}
+```
+
+```java
+package com.xingyun.template.module.example.infrastructure.web.response;
+
+/**
+ * 示例聚合的 HTTP 出参：字段以裸值表达，领域类型不越过 HTTP 边界。
+ */
+public record ExampleResponse(Long id, String code, String name) {
+}
+```
+
+```java
+package com.xingyun.template.module.example.infrastructure.web.assembler;
+
+import com.xingyun.template.module.example.api.ExampleCreateCommand;
+import com.xingyun.template.module.example.api.ExampleResult;
+import com.xingyun.template.module.example.infrastructure.web.request.ExampleCreateRequest;
+import com.xingyun.template.module.example.infrastructure.web.response.ExampleResponse;
+import org.springframework.stereotype.Component;
+
+/**
+ * HTTP 词汇（Request/Response）↔ 契约词汇（Command/Result）的转换器：只映射数据，不编排用例。
+ */
+@Component
+public class ExampleAssembler {
+
+    /**
+     * Request 转入参契约：字段校验已由框架在入站时完成。
+     */
+    public ExampleCreateCommand toCommand(ExampleCreateRequest request) {
+        return new ExampleCreateCommand(request.code(), request.name());
+    }
+
+    /**
+     * 出参契约转 Response：强类型标识在此还原为裸值。
+     */
+    public ExampleResponse toResponse(ExampleResult result) {
+        return new ExampleResponse(result.id().value(), result.code(), result.name());
+    }
+}
+```
+
+```java
+package com.xingyun.template.module.example.infrastructure.web.controller;
+
+import com.xingyun.template.module.example.api.ExampleApi;
+import com.xingyun.template.module.example.api.ExampleCreateCommand;
+import com.xingyun.template.module.example.api.ExampleResult;
+import com.xingyun.template.module.example.domain.model.ExampleId;
+import com.xingyun.template.module.example.infrastructure.web.assembler.ExampleAssembler;
+import com.xingyun.template.module.example.infrastructure.web.request.ExampleCreateRequest;
+import com.xingyun.template.module.example.infrastructure.web.response.ExampleResponse;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.net.URI;
+
+/**
+ * 示例模块的 HTTP 适配器：只做协议转换与编解码，用例编排委托 ExampleApi。
+ */
+@RestController
+@RequestMapping("/examples")
+public class ExampleController {
+
+    private final ExampleApi exampleApi;
+    private final ExampleAssembler exampleAssembler;
+
+    public ExampleController(ExampleApi exampleApi, ExampleAssembler exampleAssembler) {
+        this.exampleApi = exampleApi;
+        this.exampleAssembler = exampleAssembler;
+    }
+
+    /**
+     * 创建示例聚合：校验失败由框架返回 400，成功返回 201 并在 Location 指向新资源。
+     */
+    @PostMapping
+    public ResponseEntity<ExampleResponse> create(@Valid @RequestBody ExampleCreateRequest request) {
+        ExampleCreateCommand command = exampleAssembler.toCommand(request);
+        ExampleResult result = exampleApi.create(command);
+        return ResponseEntity.created(URI.create("/examples/" + result.id().value()))
+                .body(exampleAssembler.toResponse(result));
+    }
+
+    /**
+     * 按标识查询示例聚合：不存在返回 404。
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ExampleResponse> findById(@PathVariable Long id) {
+        return exampleApi.findById(new ExampleId(id))
+                .map(exampleAssembler::toResponse)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+}
+```
+
+---
+
+## 附录：内嵌数据库（示例模块的开箱存储）
+
+example 模块的仓储链路需要真实数据库才能跑通，但模板不预设使用者的数据库环境，也不应要求先安装、建库才能运行。模板内置了 **H2**——一个以纯 Java 实现、可随应用进程内嵌启动的轻量级数据库，并以**内存模式**运行：库表与数据只存活于应用进程内，启动时重建、停止时消失，零安装、零外部配置。它让 `mvn spring-boot:run` 之后示例接口立即可用，是示例的运行期与开发期设施，不是生产存储选型——接入真实数据库或移除示例时，清理步骤见本附录「移除」。
+
+### 构成
+
+| 组成 | 位置 | 职责 |
+| :--- | :--- | :--- |
+| H2 驱动依赖 | `pom.xml`：`com.h2database:h2`（runtime 作用域） | 内嵌数据库的 JDBC 驱动 |
+| 控制台依赖 | `pom.xml`：`org.springframework.boot:spring-boot-h2console` | H2 Web 控制台自动配置，缺它则 `spring.h2.console.enabled` 不生效 |
+| 数据源配置 | `application.yml`：`spring.datasource` | 应用连接内存库的数据源；URL 中 `DB_CLOSE_DELAY=-1` 保证连接全部关闭后，库在应用运行期间不被销毁 |
+| 控制台开关 | `application.yml`：`spring.h2.console.enabled` | 开启 H2 Web 控制台 |
+| 建表脚本 | `src/main/resources/schema.sql` | `t_example` 建表 DDL；位于 classpath 根目录，Spring Boot 对内嵌库默认在启动时自动执行 |
+
+持久化框架 MyBatis-Plus（`mybatis-plus-spring-boot4-starter`）与具体数据库无关，不属于 H2 组成——更换数据库时它保留。
+
+### 使用：查看内存库数据
+
+1. 启动应用，浏览器访问 `http://localhost:8080/h2-console`；
+2. 登录页连接信息与 `application.yml` 的 `spring.datasource` 配置一致：JDBC URL 填内存库地址 `jdbc:h2:mem:example`（控制台连接不带 `DB_CLOSE_DELAY` 参数），用户名与密码照配置填写；
+3. 连接后即可查看示例表（脚本中写作 `t_example`，H2 对未加引号的标识符按大写存储，控制台中显示为 `T_EXAMPLE`），调用 `POST /examples` 写入的数据即时可见。
+
+内存库只存活于应用进程内：IDEA 数据库工具、DBeaver 等外部客户端无法连接——在另一个 JVM 中用同一 URL 只会新建一个同名的空库；应用停止，数据即失。
+
+### 移除
+
+H2 仅服务于示例开箱即跑。接入真实数据库时按下列步骤替换；不需要持久化示例时，H2 构件按同一步骤删除（example 模块整体移除见 README 快速开始）：
+
+1. **依赖**：删除 `pom.xml` 中的 `h2` 与 `spring-boot-h2console`；接入 MySQL 等数据库时替换为对应驱动。
+2. **配置**：`application.yml` 中 `spring.datasource` 替换为真实数据库连接，删除 `spring.h2.console` 配置段。
+3. **脚本**：删除 `src/main/resources/schema.sql`——它是 H2 方言 DDL；真实库建表交由迁移工具（如 Flyway、Liquibase）或 DBA 流程，主键需为数据库自增列以匹配 PO 的 `IdType.AUTO`。
+
+若项目随之不再需要持久化，`mybatis-plus-spring-boot4-starter` 一并删除——类路径上存在持久化 starter 却无数据源配置时，应用启动失败。

@@ -1,7 +1,5 @@
 package com.xingyun.template.module.example.domain.model;
 
-import com.xingyun.template.module.example.domain.exception.ExampleRenameException;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,12 +40,12 @@ class ExampleModelTest {
     }
 
     @Test
-    @DisplayName("rename 同名违反业务规则，抛领域业务异常")
+    @DisplayName("rename 同名拒绝抛 IllegalStateException")
     void rename_shouldRejectSameName() {
         ExampleModel model = ExampleModel.create("code", "name");
 
         assertThatThrownBy(() -> model.rename("name"))
-                .isInstanceOf(ExampleRenameException.class)
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessage("新名称与当前名称相同");
     }
 

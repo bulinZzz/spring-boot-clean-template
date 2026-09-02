@@ -27,7 +27,8 @@ public class ExampleRepositoryImpl implements ExampleRepository {
     @Override
     public Optional<ExampleModel> findById(ExampleId id) {
         ExamplePO po = exampleMapper.selectById(id.value());
-        return Optional.ofNullable(exampleConverter.toDomain(po));
+        // 未命中直接返回 empty：Converter 契约要求 PO 非空，判空责任在仓储
+        return po == null ? Optional.empty() : Optional.of(exampleConverter.toDomain(po));
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.xingyun.template.module.example.domain.model;
 
-import com.xingyun.template.module.example.domain.exception.ExampleRenameException;
 import lombok.Getter;
 
 import java.util.Objects;
@@ -39,11 +38,11 @@ public class ExampleModel {
     }
 
     /**
-     * 重命名：业务规则校验内聚于聚合根，失败抛领域业务异常（定义于 domain/exception/）。
+     * 重命名：同名拒绝。
      */
     public void rename(String newName) {
         if (name.equals(newName)) {
-            throw new ExampleRenameException("新名称与当前名称相同");
+            throw new IllegalStateException("新名称与当前名称相同");
         }
         this.name = newName;
     }
