@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 
 /**
- * 示例模块的 HTTP 适配器：只做协议转换与编解码，用例编排委托 ExampleApi。
+ * 示例模块的 HTTP 适配器：只做协议转换与编解码，用例编排委托 api 契约接口
+ * ExampleApi——即便同模块也只依赖 api 公开面，不引用 application/service 的实现类。
  */
 @RestController
 @RequestMapping("/examples")

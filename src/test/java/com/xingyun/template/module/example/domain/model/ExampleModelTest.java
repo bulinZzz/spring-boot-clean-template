@@ -1,61 +1,93 @@
 package com.xingyun.template.module.example.domain.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * ExampleModel 单元测试：聚合根创建与业务规则校验（纯领域，不依赖 Spring 容器）。
+ * ExampleModel 单元测试：覆盖聚合根的充血行为与不变量（工厂、重建、重命名）。
  */
 class ExampleModelTest {
 
-    @Test
-    @DisplayName("create 快速失败 null 入参")
-    void create_shouldFailFastOnNull() {
-        assertThatNullPointerException()
-                .isThrownBy(() -> ExampleModel.create(null, "name"));
-        assertThatNullPointerException()
-                .isThrownBy(() -> ExampleModel.create("code", null));
+    @Nested
+    @DisplayName("create：新建聚合")
+    class Create {
+
+        @Test
+        @DisplayName("正常创建时无主键，code 与 name 按入参持有")
+        void create_should_have_no_id_and_hold_fields() {
+            ExampleModel model = ExampleModel.create("E001", "示例");
+
+            assertThat(model.getId()).isNull();
+            assertThat(model.getCode()).isEqualTo("E001");
+            assertThat(model.getName()).isEqualTo("示例");
+        }
+
+        @Test
+        @DisplayName("code 为 null 时快速失败")
+        void create_should_fail_fast_when_code_null() {
+            assertThatThrownBy(() -> ExampleModel.create(null, "示例"))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessage("code 不能为 null");
+        }
+
+        @Test
+        @DisplayName("name 为 null 时快速失败")
+        void create_should_fail_fast_when_name_null() {
+            assertThatThrownBy(() -> ExampleModel.create("E001", null))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessage("name 不能为 null");
+        }
     }
 
-    @Test
-    @DisplayName("create 产出的新聚合无主键")
-    void create_shouldProduceTransientAggregate() {
-        ExampleModel model = ExampleModel.create("code", "name");
+    @Nested
+    @DisplayName("reconstitute：从持久化状态重建聚合")
+    class Reconstitute {
 
-        assertThat(model.getId()).isNull();
-        assertThat(model.getName()).isEqualTo("name");
-        assertThat(model.getCode()).isEqualTo("code");
+        @Test
+        @DisplayName("携带仓储回填的主键重建，字段按入参持有")
+        void reconstitute_should_hold_id_and_fields() {
+            ExampleModel model = ExampleModel.reconstitute(new ExampleId(1L), "E001", "示例");
+
+            assertThat(model.getId()).isEqualTo(new ExampleId(1L));
+            assertThat(model.getCode()).isEqualTo("E001");
+            assertThat(model.getName()).isEqualTo("示例");
+        }
+
+        @Test
+        @DisplayName("id 为 null 时快速失败")
+        void reconstitute_should_fail_fast_when_id_null() {
+            assertThatThrownBy(() -> ExampleModel.reconstitute(null, "E001", "示例"))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessage("id 不能为 null");
+        }
     }
 
-    @Test
-    @DisplayName("reconstitute 携带主键重建聚合")
-    void reconstitute_shouldCarryId() {
-        ExampleModel model = ExampleModel.reconstitute(new ExampleId(1L), "code", "name");
+    @Nested
+    @DisplayName("rename：重命名")
+    class Rename {
 
-        assertThat(model.getId()).isEqualTo(new ExampleId(1L));
-    }
+        @Test
+        @DisplayName("新名称生效")
+        void rename_should_update_name() {
+            ExampleModel model = ExampleModel.reconstitute(new ExampleId(1L), "E001", "旧名称");
 
-    @Test
-    @DisplayName("rename 同名拒绝抛 IllegalStateException")
-    void rename_shouldRejectSameName() {
-        ExampleModel model = ExampleModel.create("code", "name");
+            model.rename("新名称");
 
-        assertThatThrownBy(() -> model.rename("name"))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("新名称与当前名称相同");
-    }
+            assertThat(model.getName()).isEqualTo("新名称");
+        }
 
-    @Test
-    @DisplayName("rename 变更名称生效")
-    void rename_shouldUpdateName() {
-        ExampleModel model = ExampleModel.create("code", "name");
+        @Test
+        @DisplayName("新名称与当前名称相同时拒绝（聚合不变量）")
+        void rename_should_reject_same_name() {
+            ExampleModel model = ExampleModel.reconstitute(new ExampleId(1L), "E001", "同名");
 
-        model.rename("new-name");
-
-        assertThat(model.getName()).isEqualTo("new-name");
+            assertThatThrownBy(() -> model.rename("同名"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("新名称与当前名称相同");
+        }
     }
 }
