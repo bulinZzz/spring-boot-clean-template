@@ -31,7 +31,7 @@ class ExampleModelTest {
         void create_should_fail_fast_when_code_null() {
             assertThatThrownBy(() -> ExampleModel.create(null, "示例"))
                     .isInstanceOf(NullPointerException.class)
-                    .hasMessage("code 不能为 null");
+                    .hasMessage("ExampleModel.create 的 code 不能为 null");
         }
 
         @Test
@@ -39,7 +39,7 @@ class ExampleModelTest {
         void create_should_fail_fast_when_name_null() {
             assertThatThrownBy(() -> ExampleModel.create("E001", null))
                     .isInstanceOf(NullPointerException.class)
-                    .hasMessage("name 不能为 null");
+                    .hasMessage("ExampleModel.create 的 name 不能为 null");
         }
     }
 
@@ -62,7 +62,7 @@ class ExampleModelTest {
         void reconstitute_should_fail_fast_when_id_null() {
             assertThatThrownBy(() -> ExampleModel.reconstitute(null, "E001", "示例"))
                     .isInstanceOf(NullPointerException.class)
-                    .hasMessage("id 不能为 null");
+                    .hasMessage("ExampleModel.reconstitute 的 id 不能为 null");
         }
     }
 

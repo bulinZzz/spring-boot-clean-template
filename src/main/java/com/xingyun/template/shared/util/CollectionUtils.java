@@ -9,15 +9,14 @@ import java.util.Map;
 /**
  * 集合工具类 —— 全项目集合处理的唯一防腐层入口。
  *
- * <p>全项目禁止直接使用 {@code org.springframework.util.CollectionUtils}、
- * {@code org.apache.commons.collections4.CollectionUtils} 等任何第三方 {@code CollectionUtils}，
- * 集合工具调用一律经由本类；底层委托 Spring Framework 的 {@code CollectionUtils}
- * （spring-core 提供，无额外依赖），可整体替换而调用方零改动。</p>
+ * <p>全项目禁止直接使用任何第三方 {@code CollectionUtils}，集合工具调用一律经由本类。
+ * 底层委托 Spring Framework 的 {@code CollectionUtils}（spring-core 提供，无额外依赖），
+ * 可整体替换而调用方零改动。本类中 {@code @Nullable} 参数即边界层的 null 容忍契约入口——
+ * "null 容忍"是显式契约，而非隐式吞没；内部层调用须先经 {@code Objects.requireNonNull}
+ * 快速失败，其后直接使用 JDK 原生方法。</p>
  *
- * <p>信任边界两侧的 null 处理判据以 AGENTS.md §5 为准：本类中 {@code @Nullable} 参数
- * 即边界层的 null 容忍契约入口，内部层调用须先经 {@code Objects.requireNonNull} 快速失败。</p>
- *
- * <p>方法集按需新增、不预先穷举：新增方法委托底层库同名实现，同步声明 null 契约并附中文 Javadoc。
+ * <p>方法集按需新增；当前判空族（Collection / Map × isEmpty / isNotEmpty）作为统一入口的基线占位，
+ * 其余能力按实际需求新增——新增方法委托底层库同名实现，同步声明 null 契约并附中文 Javadoc。
  * 本类声明 {@link NullMarked}——除显式标注 {@code @Nullable} 的参数与返回值外，其余均视为非 {@code null}；
  * 无状态实现，线程安全。</p>
  */

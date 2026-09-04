@@ -13,8 +13,7 @@ import java.util.Optional;
 /**
  * ExampleApi 的应用服务实现：编排用例流程，内聚契约 DTO ↔ 领域模型转换。
  *
- * <p>用例方法即事务边界：涉及多步写操作的用例方法在此标注 {@code @Transactional}
- * （该注解禁止出现在 domain 层，判据见 AGENTS.md §2）；本类用例均为单步读写，无需标注。
+ * <p>用例方法即事务边界；本类用例均为单步读写，无需标注 {@code @Transactional}。
  */
 @Service
 public class ExampleApiImpl implements ExampleApi {

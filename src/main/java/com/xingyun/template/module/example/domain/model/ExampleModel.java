@@ -24,8 +24,8 @@ public class ExampleModel {
      * 创建聚合根：新聚合无主键，由仓储 save 后回填。
      */
     public static ExampleModel create(String code, String name) {
-        Objects.requireNonNull(code, "code 不能为 null");
-        Objects.requireNonNull(name, "name 不能为 null");
+        Objects.requireNonNull(code, "ExampleModel.create 的 code 不能为 null");
+        Objects.requireNonNull(name, "ExampleModel.create 的 name 不能为 null");
         return new ExampleModel(null, code, name);
     }
 
@@ -33,7 +33,7 @@ public class ExampleModel {
      * 从持久化状态重建聚合根：携带主键，供仓储实现还原聚合时调用。
      */
     public static ExampleModel reconstitute(ExampleId id, String code, String name) {
-        Objects.requireNonNull(id, "id 不能为 null");
+        Objects.requireNonNull(id, "ExampleModel.reconstitute 的 id 不能为 null");
         return new ExampleModel(id, code, name);
     }
 

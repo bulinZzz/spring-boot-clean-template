@@ -35,12 +35,10 @@ public class ExampleRepositoryImpl implements ExampleRepository {
     public ExampleModel save(ExampleModel exampleModel) {
         ExamplePO po = exampleConverter.toPO(exampleModel);
         if (po.getId() == null) {
-            // 新增：主键为数据库自增策略，insert 后由框架回填至 PO
-            exampleMapper.insert(po);
+            exampleMapper.insert(po);   // insert 后 PO 获得数据库回填的主键
         } else {
             exampleMapper.updateById(po);
         }
-        // 将持久化结果（含回填主键）转回领域模型，保证调用方拿到与存储一致的聚合状态
-        return exampleConverter.toDomain(po);
+        return exampleConverter.toDomain(po); // 转回领域模型，调用方拿到与存储一致的聚合状态
     }
 }
