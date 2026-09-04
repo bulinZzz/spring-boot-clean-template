@@ -15,7 +15,7 @@
 为控制上下文成本，AI 助手按需增量导航，禁止非必要的全量代码通读：
 
 1. **理解模块对外能力**：只读 `module/<name>/api/` 包（服务接口 + 契约 DTO），即可回答"该模块能做什么、怎么调"；禁止为理解模块能力而通读其内部实现。
-2. **改动模块内部**：按 [ARCHITECTURE.md §2](./ARCHITECTURE.md#2-规范化包结构蓝图) 的包结构按层定位目标文件。范例 `module/example/` 是可整体移除的教学模块：若该目录存在，新写某层代码前先读范例中对应层文件，仿写而非自创——范例已覆盖 api、domain（model、repository）、application/service 与 infrastructure（web、persistence）；若该目录不存在，说明使用者已移除范例，属正常状态——不寻找、不重建范例，范例未含的层（domain/service、application/port、infrastructure/integration）同样如此，一律按 §2 红线、§4 仓储与防腐判据与 ARCHITECTURE 包树注释书写。文件级规则与决策承载在代码内中文注释中（注释与代码同权，见 §5）。
+2. **改动模块内部**：按 [ARCHITECTURE.md §2](./ARCHITECTURE.md#2-规范化包结构蓝图) 的包结构按层定位目标文件。范例 `module/example/` 是可整体移除的教学模块：若该目录存在，新写某层代码前先读范例中对应层文件，仿写而非自创——范例已覆盖 api、domain（model、repository）、application/service 与 infrastructure（web、persistence）。跨模块调用的写法见同为教学模块的 `module/comment/`（消费 example 的 api 契约；该目录不存在时按 §2 模块封装边界判据书写）。若该目录不存在，说明使用者已移除范例，属正常状态——不寻找、不重建范例，范例未含的层（domain/service、application/port、infrastructure/integration）同样如此，一律按 §2 红线、§4 仓储与防腐判据与 ARCHITECTURE 包树注释书写。文件级规则与决策承载在代码内中文注释中（注释与代码同权，见 §5）。
 3. **判据优先**：验证架构合规时以本文档判据为准（依赖封闭、api 包边界、数据模型隔离），不从代码反推规则。
 
 ---
@@ -30,11 +30,11 @@
 * **充血模型**：业务规则与它约束的聚合状态同居于模型。约束聚合不变量的规则（如重命名的同名拒绝、状态流转的前置条件）实现为模型的行为方法——校验与变更在模型内部完成，外部只能经行为方法改变聚合，不获得裸字段写入。规则写在 ApplicationService（职责仅为编排用例：调工厂与仓储、转契约）或 Controller（仅做协议转换）中即违规；跨聚合的纯业务逻辑归 Domain Service。
 * **入参校验止步边界**：入参的格式与存在性校验（如 `@NotBlank`）属边界层输入约束、止步 Request——它不是业务规则，不随之进入 Domain。
 * **数据模型隔离**：各层模型止步于所属层，跨层传递须经显式转换，禁止裸传（模型归属与转换器职责见 §3）。
-* **模块封装边界**：`api` 包是模块唯一对外公开面——跨模块只依赖对方 `module/<name>/api/` 包显式暴露的服务接口与契约 DTO（Command/Query/Result）；该包之外的一切类型（Domain Model、Repository、应用服务实现、Mapper、PO 等）均为内部实现，既禁止跨模块引用，也禁止经契约外泄。数据表归属唯一模块，严禁跨模块直查。
+* **模块封装边界**：`api` 包是模块唯一对外公开面——跨模块只依赖对方 `module/<name>/api/` 包显式暴露的服务接口与契约 DTO（Command/Query/Result），以及契约签名中引用的对方 domain 值语义类型（强类型 ID 等值对象——若不随签名公开，调用方将无法构造入参）；该包之外的其余类型（Domain Model、Repository、应用服务实现、Mapper、PO 等）均为内部实现，既禁止跨模块引用，也禁止经契约外泄。数据表归属唯一模块，严禁跨模块直查。
 
 ### 典型代码对比
 
-下例同时对照红线 1（框架语义泄漏）与红线 2（贫血模型）：
+下例同时对照 Domain 零框架语义与充血模型两条红线（分别杜绝框架语义泄漏与贫血模型）：
 
 **❌ BAD：框架注解泄漏至 Domain 层，模型贫血无行为**
 
@@ -101,7 +101,7 @@ public class Order {
 * **仓储与出站端口（依赖倒置双端）**：接口定义在内层——仓储属 `domain`、出站端口属 `application`，均为纯 Java Interface；技术实现在外层 `infrastructure`——持久化实现经 `Converter` 完成 PO 与领域模型互转，集成适配器封装外部服务调用。
 * **第三方工具库（防腐层）**：生产代码禁止直接调用第三方库提供的静态工具方法（如 `org.apache.commons.lang3.StringUtils`、`org.springframework.util.CollectionUtils` 等；JDK 原生 API 不在此列）。通用处理统一经由本项目 `com.xingyun.template.shared.util` 防腐层，理由有二：其一、替换收口——底层实现集中一处，换库零调用方改动；其二、同名异源统一入口——`StringUtils` 在 Apache Commons、Spring Framework、Google Guava 等多个依赖中各有同名实现，统一入口可防止开发者各引各的、import 碎片化。所需方法防腐层未提供时，在防腐层内新增委托方法（底层委托第三方实现，同步声明 null 契约并附中文 Javadoc），而非在使用处直调第三方或自行手抄同类逻辑。委托实现与逐方法契约以防腐层各类 Javadoc 为准。
 
-测试代码不受本条约束。
+测试代码不受工具防腐约束。
 
 ---
 
@@ -131,11 +131,17 @@ null 处理按数据是否跨越信任边界分两层：
 * **预期内的缺失不是异常**："查无此对象"这类正常可能的结果用 `Optional` 表达，禁止以异常驱动正常控制流（如 GET 单资源不存在时，404 在 `Optional` 末端构建响应）。
 * **规则违规抛 JDK 标准异常**：聚合不变量被违反抛 `IllegalStateException`、非法入参抛 `IllegalArgumentException` 等标准类型；异常消息面向开发者日志，不是对外契约。禁止为每类业务失败自定义异常类、禁止 `BizException` 式错误码枚举——它们没有差异化捕获方，HTTP 状态码已是对外语义。
 * **技术故障不捕获**：数据库不可用、外部调用超时等基础设施异常在业务代码中不 catch，传播到边界统一处理。
-* **异常到响应的翻译集中一处**：由唯一的 `@RestControllerAdvice` 承担；该设施及其所需的通用异常类型随首个真实需要引入——模板当前刻意不含全局异常处理。
+* **异常到响应的翻译集中一处**：由唯一的 `@RestControllerAdvice` 承担，映射判据以该类注释为准。
 
 ### 文档成稿
 
 注释与文档修改后不留过程痕迹——不出现"原先""已删除""由 X 改为 Y"之类的修订叙述，删改与方案变更一律按最终意图重新表达，成品读来应如初次写下；历史追溯交给 Git。
+
+### 任务收尾审计
+
+编码完成不是任务完成的标志。每个任务收尾时，改动先按本规范判据过审，修复后自测，自测通过才算收尾。
+
+交付时必须随附一行审计结论——无发现，或"发现 X，已修复，测试通过"；未报告即未审。发现按行为风险处置：表达级与结构级问题（注释、注解位置、依赖声明等）修复后跑测试即可；行为级问题先补一枚锁定当前行为的测试再修，对错由测试裁决。只报告说得出"不改会发生什么"的发现，零发现同样是合格的审计结论。
 
 ---
 
@@ -143,7 +149,7 @@ null 处理按数据是否跨越信任边界分两层：
 
 以下为编码层面的统一约定：
 
-1. **依赖注入**：构造器注入或 Lombok `@RequiredArgsConstructor`，禁止字段 `@Autowired`。
+1. **依赖注入**：构造器注入或 Lombok `@RequiredArgsConstructor`，禁止字段 `@Autowired`（含测试）。
 2. **封装性**：聚合根与领域实体使用精细的 `@Getter`，禁止滥用 `@Data`。
 3. **强类型 ID**：业务对象标识使用模块内 `record` 声明（如 `OrderId(Long value)`），标识值在紧凑构造器中快速失败 null。
 4. **单元测试**：编写或修改 Domain Model / Domain Service 时，同步生成 JUnit 5 + AssertJ 单元测试。

@@ -1,8 +1,8 @@
-# Spring Boot 整洁架构设计规范
+# Spring Boot 整洁架构蓝图
 
 ## 1. 架构总则
 
-本规范基于**整洁架构（Clean Architecture）**与**六边形架构（Hexagonal Architecture）**，严格执行**依赖倒置原则（DIP）**。
+本蓝图基于**整洁架构（Clean Architecture）**与**六边形架构（Hexagonal Architecture）**，严格执行**依赖倒置原则（DIP）**。
 
 ### 分层与依赖方向
 
@@ -34,23 +34,23 @@
 
 ```text
 com.xingyun.template
-├── Application.java                        // 🚀 Spring Boot 启动主类（唯一启动类，组件扫描覆盖全部模块，新模块无需自建启动类）
+├── Application.java                        // 🚀 Spring Boot 启动主类 (唯一启动类，组件扫描覆盖全部模块)
 ├── shared                                  // 全局共享层 (不含业务语义，供所有模块复用)
-│   ├── domain                              // 全局通用值对象 (例如: DateRange, Money 等纯 Java 值对象)
+│   ├── domain                              // 跨模块共享的值对象 (例如: DateRange, Money；准入判据: ≥2 个模块真实消费)
 │   ├── util                                // 工具防腐层 (统一封装第三方工具库，依赖与类型不外泄，判据见 AGENTS.md §4)
-│   └── integration                         // 跨模块共用技术连接器 (例如: Redis 连接装配；准入判据: ≥2 个模块真实消费)
+│   ├── integration                         // 跨模块共用技术连接器 (例如: Redis 连接装配；准入判据: ≥2 个模块真实消费)
+│   └── web                                 // 全局 Web 设施 (例如: 异常→HTTP 翻译的 @RestControllerAdvice)
 │
 └── module                                  // 业务领域模块根目录
-    └── [domain_name]                       // 具体业务领域 (例如: example, payment)
+    └── [domain_name]                       // 具体业务领域 (例如: example, comment)
         ├── api                             // 🚪 [0. 公开契约包] 模块唯一对外入口 (跨模块仅可依赖本包，判据见 AGENTS.md §2)
         │   ├── ExampleApi                  // 对外服务接口 (应用用例的公开视图，实现类位于 application/service)
-        │   └── XxxCommand / XxxQuery / XxxResult
-        │                                   // 契约 DTO (record 实现，按用例词根命名，平铺不设子包)
+        │   └── XxxCommand / XxxQuery / XxxResult  // 契约 DTO (record 实现，按用例词根命名，平铺不设子包)
         │
         ├── domain                          // 💎 [1. 核心领域层] (纯业务逻辑，依赖封闭)
         │   ├── model                       // 领域模型 / 聚合根 (包含核心业务行为与状态)
-        │   ├── repository                  // 仓储接口契约 (纯 Interface，定义持久化能力)
-        │   └── service                     // 核心领域服务 (跨聚合根的纯业务逻辑)
+        │   ├── repository                  // 仓储接口 (纯 Interface，定义持久化能力)
+        │   └── service                     // 领域服务 (跨聚合根的纯业务逻辑)
         │
         ├── application                     // 🟧 [2. 应用编排层] (应用用例实现)
         │   ├── service                     // 应用服务实现类 (实现本模块 api 包接口，内聚契约 DTO ↔ 领域模型转换；用例方法即事务边界)
@@ -73,6 +73,6 @@ com.xingyun.template
                 └── assembler               // Request/Response ↔ Command/Result 转换器
 ```
 
-**可运行范例**：各层标准写法以 `module/example/` 为完整范例（可整体移除的教学模块，含建表脚本与单元测试），搭建业务模块时直接参照其包结构与代码；文件级规则与决策以代码内中文注释承载（注释与代码同权，见 [AGENTS.md §5](./AGENTS.md#5-工程规则)），架构判据见 [AGENTS.md](./AGENTS.md)。示例存储由内嵌 H2 开箱提供，其构成、使用与移除见 [docs/embedded-h2.md](./docs/embedded-h2.md)。
+**可运行范例**：各层标准写法以 `module/example/` 为完整范例（可整体移除的教学模块，含建表脚本与单元测试），跨模块调用的写法见 `module/comment/`，搭建业务模块时直接参照其包结构与代码；文件级规则与决策以代码内中文注释承载（注释与代码同权，见 [AGENTS.md §5](./AGENTS.md#5-工程规则)），架构判据见 [AGENTS.md](./AGENTS.md)。示例存储由内嵌 H2 开箱提供，其构成、使用与移除见 [docs/embedded-h2.md](./docs/embedded-h2.md)。
 
 

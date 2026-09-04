@@ -60,6 +60,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
+        <!-- JSpecify null 注解：util 防腐层 @NullMarked/@Nullable 契约的标准库，代码直接 import 即直接声明 -->
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
 
         <!-- 编译期增强 -->
         <dependency>

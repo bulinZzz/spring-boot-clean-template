@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Spring Boot 唯一启动主类：组件扫描覆盖全部模块，新模块无需自建启动类。
+ * Spring Boot 唯一启动主类（组件扫描覆盖全部模块）。
  */
 @SpringBootApplication
 public class Application {

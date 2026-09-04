@@ -1,8 +1,11 @@
 package com.xingyun.template.module.example.infrastructure.web.assembler;
 
 import com.xingyun.template.module.example.api.ExampleCreateCommand;
+import com.xingyun.template.module.example.api.ExampleRenameCommand;
 import com.xingyun.template.module.example.api.ExampleResult;
+import com.xingyun.template.module.example.domain.model.ExampleId;
 import com.xingyun.template.module.example.infrastructure.web.request.ExampleCreateRequest;
+import com.xingyun.template.module.example.infrastructure.web.request.ExampleRenameRequest;
 import com.xingyun.template.module.example.infrastructure.web.response.ExampleResponse;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +20,13 @@ public class ExampleAssembler {
      */
     public ExampleCreateCommand toCommand(ExampleCreateRequest request) {
         return new ExampleCreateCommand(request.code(), request.name());
+    }
+
+    /**
+     * Request 转入参契约（携带路径标识）：字段校验已由框架在入站时完成。
+     */
+    public ExampleRenameCommand toCommand(ExampleId id, ExampleRenameRequest request) {
+        return new ExampleRenameCommand(id, request.name());
     }
 
     /**
