@@ -17,9 +17,8 @@ AI 生成的代码容易产出贫血模型与框架泄漏，人工开发的架�
 1. **模板实例化**：在 GitHub 页面点击 **Use this template** 创建新仓库。
 2. **包名重构**：对根包 `com.xingyun.template` 执行全局重命名（`Shift + F6`），替换为实际项目包路径。
 3. **启动验证**：执行 `mvn spring-boot:run`，服务基于内嵌 H2 数据库启动，无需安装或准备外部数据库。
-4. **开发前准备**：建议先阅读 ARCHITECTURE.md 与 AGENTS.md，对架构边界建立整体认识。
-5. **搭建模块**：参照 `module/example/` 的包结构与代码搭建业务模块（范例含建表脚本与单元测试，文件级规则见代码内中文注释）。
-6. **移除范例（可选）**：示例模块（`example` 及消费其契约的 `comment`，需一并移除）不含业务逻辑，不需要时删除 main 与 test 两个源码树下的 `module/example/` 与 `module/comment/` 目录，以及 `src/main/resources/schema.sql`；其后按持久化去向收尾——接入真实数据库则 H2 替换为对应驱动与连接配置（MyBatis-Plus 保留），不再需要持久化则 H2、MyBatis-Plus 依赖与数据源配置一并删除，步骤均见 [docs/embedded-h2.md](./docs/embedded-h2.md)「移除」。
+4. **开发前准备**：建议先阅读 [ARCHITECTURE.md](./ARCHITECTURE.md) 与 [AGENTS.md](./AGENTS.md)，对架构边界建立整体认识。
+5. **搭建模块**：项目提供 `module/example/`（完整分层）与 `module/comment/`（跨模块调用）两个范例，参照其包结构与代码搭建业务模块；范例与内嵌 H2 的介绍、使用及可优雅移除的步骤见 [docs/examples.md](./docs/examples.md)。
 
 ## 文档导航
 
@@ -27,3 +26,4 @@ AI 生成的代码容易产出贫血模型与框架泄漏，人工开发的架�
 | :--- | :--- | :--- |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | 分层架构总则、包结构蓝图、可运行范例导引 | 所有开发者 |
 | [AGENTS.md](./AGENTS.md) | AI 导航协议、架构红线、数据模型隔离、仓储与防腐、工程规则与代码生成约定 | 开发者与 AI Agent（自动加载） |
+| [docs/examples.md](./docs/examples.md) | 范例模块（example/comment）与内嵌 H2 的介绍、使用与移除 | 参照或移除范例的开发者 |

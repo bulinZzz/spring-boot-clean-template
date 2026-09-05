@@ -73,6 +73,6 @@ com.xingyun.template
                 └── assembler               // Request/Response ↔ Command/Result 转换器
 ```
 
-**可运行范例**：各层标准写法以 `module/example/` 为完整范例（可整体移除的教学模块，含建表脚本与单元测试），跨模块调用的写法见 `module/comment/`，搭建业务模块时直接参照其包结构与代码；文件级规则与决策以代码内中文注释承载（注释与代码同权，见 [AGENTS.md §5](./AGENTS.md#5-工程规则)），架构判据见 [AGENTS.md](./AGENTS.md)。示例存储由内嵌 H2 开箱提供，其构成、使用与移除见 [docs/embedded-h2.md](./docs/embedded-h2.md)。
+**可运行范例**：各层标准写法以 `module/example/` 为完整范例，跨模块调用见 `module/comment/`；文件级规则与决策以代码内中文注释承载（注释与代码同权，见 [AGENTS.md §5](./AGENTS.md#5-工程规则)），架构判据见 [AGENTS.md](./AGENTS.md)。范例与内嵌 H2 的介绍、使用与移除见 [docs/examples.md](./docs/examples.md)。
 
 
