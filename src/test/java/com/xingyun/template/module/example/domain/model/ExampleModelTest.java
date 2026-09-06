@@ -89,5 +89,16 @@ class ExampleModelTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("新名称与当前名称相同");
         }
+
+        @Test
+        @DisplayName("新名称为 null 时快速失败，聚合名称保持不变")
+        void rename_should_fail_fast_when_new_name_null() {
+            ExampleModel model = ExampleModel.reconstitute(new ExampleId(1L), "E001", "旧名称");
+
+            assertThatThrownBy(() -> model.rename(null))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessage("ExampleModel.rename 的 newName 不能为 null");
+            assertThat(model.getName()).isEqualTo("旧名称");
+        }
     }
 }

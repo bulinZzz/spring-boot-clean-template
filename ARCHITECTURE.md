@@ -2,77 +2,154 @@
 
 ## 1. 架构总则
 
-本蓝图基于**整洁架构（Clean Architecture）**与**六边形架构（Hexagonal Architecture）**，严格执行**依赖倒置原则（DIP）**。
+本项目采用整洁架构（Clean Architecture）、六边形架构（Hexagonal Architecture）与依赖倒置原则（DIP）。
 
 ### 分层与依赖方向
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│  Infrastructure / Web / Integration  (最外层：技术细节)  │
-└───────────────────────────┬─────────────────────────────┘
-                            │ 依赖 (Imports)
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│        Application           (中间层：应用用例与流程编排) │
-└───────────────────────────┬─────────────────────────────┘
-                            │ 依赖 (Imports)
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│          Domain              (最内层：纯粹业务逻辑核心)   │
-└───────────────────────────┴─────────────────────────────┘
+Web / Infrastructure / Integration
+                 ↓
+             Application
+                 ↓
+               Domain
 ```
 
-* **依赖单向**：外层适配器与技术实现依赖内层业务抽象，内层核心禁止依赖外层。
-* **依赖封闭**：最内层的 `domain` 不携带任何框架语义（持久化 / 序列化 / 依赖注入等），红线见 [AGENTS.md §2](./AGENTS.md#2-硬性红线do-not)。
-* **形状来源**：本图所有分层与包名的规则判据，维护于 [AGENTS.md](./AGENTS.md)。
+外层依赖内层，源码依赖方向向内收敛：
 
----
+* Web / Infrastructure 可以依赖 Application 与 Domain。
+* Application 可以依赖 Domain。
+* Domain 不依赖 Application、Infrastructure、Web 或具体技术框架。
+* 模块内部同样遵循依赖向内收敛的原则。
 
-## 2. 规范化包结构蓝图
+更具体的架构判据、模块封装、模型隔离与工程约束见 `AGENTS.md`。
 
-系统按 **领域边界（Bounded Context）** 划分高层模块；模块内部遵循统一三层结构（domain / application / infrastructure），`api` 为模块唯一公开契约包：
+## 2. 模块与包结构
+
+系统按业务领域划分高层模块。每个模块内部按 `api / domain / application / infrastructure` 组织，`api` 是模块唯一公开面。
+
+```text id="1d1k6y"
+com.xingyun.template
+├── Application.java                    // Spring Boot 启动类，组件扫描覆盖全部模块
+│
+├── shared
+│   ├── domain
+│   ├── util
+│   ├── integration
+│   └── web
+│
+└── module
+    └── [domain_name]
+        ├── api
+        │   ├── XxxApi
+        │   ├── XxxCommand
+        │   ├── XxxQuery
+        │   └── XxxResult
+        │
+        ├── domain
+        │   ├── model
+        │   ├── repository
+        │   └── service
+        │
+        ├── application
+        │   ├── service
+        │   └── port
+        │
+        └── infrastructure
+            ├── persistence
+            │   ├── entity
+            │   ├── mapper
+            │   ├── converter
+            │   └── impl
+            │
+            ├── integration
+            │   └── [vendor]
+            │
+            └── web
+                ├── controller
+                ├── request
+                ├── response
+                └── assembler
+```
+
+### 各层职责
+
+| 层 / 组件                     | 职责                                        |
+|------------------------------|-------------------------------------------|
+| `api`                        | 模块公开服务接口、Command、Query、Result 及稳定公开值语义类型  |
+| `domain/model`               | 领域模型、聚合根与实体，维护业务状态与不变量                    |
+| `domain/repository`          | 领域持久化能力抽象                                 |
+| `domain/service`             | 无法归属单一领域模型的跨聚合纯业务规则                       |
+| `application/service`        | 应用用例实现、事务控制、用例编排及契约与领域模型之间的转换             |
+| `application/port`           | Application 所需的非持久化外部能力抽象                 |
+| `infrastructure/persistence` | 数据库访问、PO、Mapper、Converter 与 Repository 实现 |
+| `infrastructure/integration` | 外部系统与第三方服务适配                              |
+| `infrastructure/web`         | HTTP / REST 协议适配                          |
+| `shared`                     | 真正跨模块共享且稳定的非业务能力                          |
+
+具体边界及模型转换规则见 `AGENTS.md`。
+
+## 3. 依赖与边界
+
+模块之间通过 `api` 建立公开契约依赖，模块内部实现不得成为其他模块的依赖对象。
+
+Domain 不承载具体技术语义；数据库、ORM、HTTP、序列化、依赖注入及第三方 SDK 等技术细节由外层适配。
+
+Repository 由 Domain 声明领域持久化能力，Port 由 Application 声明所需的非持久化外部能力；具体实现均位于 Infrastructure。
+
+不同边界使用各自模型，典型流转关系如下：
 
 ```text
-com.xingyun.template
-├── Application.java                        // 🚀 Spring Boot 启动主类 (唯一启动类，组件扫描覆盖全部模块)
-├── shared                                  // 全局共享层 (不含业务语义，供所有模块复用)
-│   ├── domain                              // 跨模块共享的值对象 (例如: DateRange, Money；准入判据: ≥2 个模块真实消费)
-│   ├── util                                // 工具防腐层 (统一封装第三方工具库，依赖与类型不外泄，判据见 AGENTS.md §4)
-│   ├── integration                         // 跨模块共用技术连接器 (例如: Redis 连接装配；准入判据: ≥2 个模块真实消费)
-│   └── web                                 // 全局 Web 设施 (例如: 异常→HTTP 翻译的 @RestControllerAdvice)
-│
-└── module                                  // 业务领域模块根目录
-    └── [domain_name]                       // 具体业务领域 (例如: example, comment)
-        ├── api                             // 🚪 [0. 公开契约包] 模块唯一对外入口 (跨模块仅可依赖本包，判据见 AGENTS.md §2)
-        │   ├── ExampleApi                  // 对外服务接口 (应用用例的公开视图，实现类位于 application/service)
-        │   └── XxxCommand / XxxQuery / XxxResult  // 契约 DTO (record 实现，按用例词根命名，平铺不设子包)
-        │
-        ├── domain                          // 💎 [1. 核心领域层] (纯业务逻辑，依赖封闭)
-        │   ├── model                       // 领域模型 / 聚合根 (包含核心业务行为与状态)
-        │   ├── repository                  // 仓储接口 (纯 Interface，定义持久化能力)
-        │   └── service                     // 领域服务 (跨聚合根的纯业务逻辑)
-        │
-        ├── application                     // 🟧 [2. 应用编排层] (应用用例实现)
-        │   ├── service                     // 应用服务实现类 (实现本模块 api 包接口，内聚契约 DTO ↔ 领域模型转换；用例方法即事务边界)
-        │   └── port                        // 出站端口接口 (例如: PaymentPort, SmsPort)
-        │
-        └── infrastructure                  // 🟨 [3. 基础设施适配层] (技术细节实现)
-            ├── persistence                 // 数据库持久化实现 (MyBatis-Plus；ORM 耦合点仅 PO 注解与 Mapper 声明，更换 ORM 不影响分层结构与转换契约)
-            │   ├── entity                  // ORM 物理表 PO (携带框架注解)
-            │   ├── mapper                  // 原生 Mapper / DAO 接口
-            │   ├── converter               // PO ↔ 领域模型双向转换器
-            │   └── impl                    // domain/repository 接口的实现类
-            │
-            ├── integration                 // 第三方服务适配器 (实现 application/port 接口)
-            │   └── [vendor]                // 外部服务 SDK 调用与防腐封装
-            │
-            └── web                         // HTTP / REST 适配器 (入口)
-                ├── controller              // Spring RestController
-                ├── request                 // 入参 Request DTO (携带校验注解)
-                ├── response                // 出参 Response VO
-                └── assembler               // Request/Response ↔ Command/Result 转换器
+Request / Response
+        ↕
+     Assembler
+        ↕
+Command / Query / Result
+        ↕
+Application Service
+        ↕
+    Domain Model
+        ↕
+     Converter
+        ↕
+        PO
 ```
 
-**可运行范例**：各层标准写法以 `module/example/` 为完整范例，跨模块调用见 `module/comment/`；文件级规则与决策以代码内中文注释承载（注释与代码同权，见 [AGENTS.md §5](./AGENTS.md#5-工程规则)），架构判据见 [AGENTS.md](./AGENTS.md)。范例与内嵌 H2 的介绍、使用与移除见 [docs/examples.md](./docs/examples.md)。
+以上为典型模型流转关系，具体用例根据实际边界使用所需模型，不因架构形式而强行引入不必要的转换层。
 
+这种边界使业务语义保持独立，避免 HTTP、数据库或第三方技术模型直接塑造 Domain 与模块公开契约。
 
+## 4. 设计取舍
+
+### 4.1 依赖优先考虑可解除性
+
+复用会建立依赖。
+
+因此，共享抽象不以减少重复为唯一目标，而应具有明确语义，并尽量通过公开契约、Port 或其他边界隔离实现变化。直接共享实现细节虽然可以减少代码，却可能使一方的内部变化成为另一方的负担。
+
+因此 `shared` 保持克制，模块通过 `api` 暴露能力，外部技术通过 Repository、Port 与 Adapter 等边界进入系统。
+
+### 4.2 业务模型由业务语义驱动
+
+业务模型承载业务语义，技术设施由消费方声明所需能力。
+
+持久化、远程服务、消息等基础设施不应反向塑造 Domain 或模块公开契约。具体技术通过 Repository、Port、Adapter 等边界提供能力，使业务模型保持独立于技术实现。
+
+### 4.3 优先使用已有语义
+
+自定义抽象用于解决明确的问题，而不是为了形式上的统一。
+
+语言、框架和生态已有成熟语义时，优先直接使用；只有现有语义不足以表达项目需要，或无法提供必要的边界隔离时，才建立项目自己的抽象。
+
+### 4.4 依据可观察上下文工作
+
+本项目同时作为模板维护和模板使用的代码基础。仓库内容本身不足以可靠判断当前操作者属于哪一种场景。
+
+因此，任务范围与行为应依据当前任务、用户明确要求、工作区状态以及可观察的代码和配置决定，不应根据对操作者身份的猜测而扩大、改变或限制任务。
+
+## 5. 示例模块
+
+`module/example/` 是完整分层范例，供开发者和 AI 参考各层标准写法。
+
+`module/comment/` 演示跨模块调用，仅依赖 `example/api` 中公开的契约及其稳定值语义类型。
+
+范例属于参考实现，可以整体删除；范例的介绍、使用及移除方式见 `docs/examples.md`。

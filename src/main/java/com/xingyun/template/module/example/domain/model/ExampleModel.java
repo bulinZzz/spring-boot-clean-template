@@ -38,9 +38,10 @@ public class ExampleModel {
     }
 
     /**
-     * 重命名：同名拒绝。
+     * 重命名：同名拒绝（新名称不能为 null）。
      */
     public void rename(String newName) {
+        Objects.requireNonNull(newName, "ExampleModel.rename 的 newName 不能为 null");
         if (name.equals(newName)) {
             throw new IllegalStateException("新名称与当前名称相同");
         }
