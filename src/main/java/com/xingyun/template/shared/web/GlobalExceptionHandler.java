@@ -1,27 +1,53 @@
 package com.xingyun.template.shared.web;
 
+import com.xingyun.template.shared.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
- * 全局异常 → HTTP 翻译器：全项目唯一的 {@code @RestControllerAdvice}，业务代码不捕获
- * 技术故障，异常传播到 HTTP 边界后在此统一翻译为响应。
+ * 全局异常 → HTTP 翻译器。
  *
- * <p>映射判据：{@code IllegalStateException} 是本项目"聚合不变量被违反"的统一词汇，
- * 属调用方可纠正的业务拒绝，翻译为 409 Conflict；异常消息面向开发者日志而非对外契约，
- * 故响应体为空，状态码即对外语义。新异常类型的映射随首个真实需要在此增补，
- * 不设无消费方的处理器。
+ * <p>业务代码不捕获技术异常；异常传播到 HTTP 边界后统一翻译。
  */
 @Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Void> onIllegalState(IllegalStateException exception) {
-        log.warn("聚合不变量违规：{}", exception.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    /**
+     * 业务规则拒绝 → 409 Conflict。
+     */
+    @ExceptionHandler(BusinessException.class)
+    ProblemDetail onBusinessException(BusinessException exception) {
+        log.warn("业务规则拒绝：{}", exception.getMessage());
+
+        ProblemDetail problemDetail =
+                ProblemDetail.forStatusAndDetail(
+                        HttpStatus.CONFLICT,
+                        exception.getMessage()
+                );
+        problemDetail.setTitle("Business Rule Violation");
+        return problemDetail;
+    }
+
+    /**
+     * 未预期异常 → 500 Internal Server Error。
+     *
+     * <p>完整异常写日志，但不将内部异常信息暴露给调用方。
+     */
+    @ExceptionHandler(Exception.class)
+    ProblemDetail onUnexpectedException(Exception exception) {
+        log.error("未预期异常", exception);
+
+        ProblemDetail problemDetail =
+                ProblemDetail.forStatusAndDetail(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "服务器内部错误"
+                );
+        problemDetail.setTitle("Internal Server Error");
+        return problemDetail;
     }
 }

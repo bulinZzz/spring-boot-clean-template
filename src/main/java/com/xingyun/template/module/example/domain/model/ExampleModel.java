@@ -1,5 +1,6 @@
 package com.xingyun.template.module.example.domain.model;
 
+import com.xingyun.template.shared.exception.BusinessException;
 import lombok.Getter;
 
 import java.util.Objects;
@@ -43,7 +44,7 @@ public class ExampleModel {
     public void rename(String newName) {
         Objects.requireNonNull(newName, "ExampleModel.rename 的 newName 不能为 null");
         if (name.equals(newName)) {
-            throw new IllegalStateException("新名称与当前名称相同");
+            throw new BusinessException("新名称与当前名称相同");
         }
         this.name = newName;
     }

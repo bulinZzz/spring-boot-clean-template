@@ -35,6 +35,7 @@ com.xingyun.template
 │   ├── domain
 │   ├── util
 │   ├── integration
+│   ├── exception
 │   └── web
 │
 └── module
@@ -115,6 +116,30 @@ Application Service
 ```
 
 以上为典型模型流转关系，具体用例根据实际边界使用所需模型，不因架构形式而强行引入不必要的转换层。
+
+### 异常边界
+
+业务层可以抛出与具体外部协议无关的业务异常，用于表达业务规则拒绝。
+
+`BusinessException` 是默认的业务异常类型。只有现有异常类型无法满足明确的差异化处理需求时，才允许新增异常类型。
+
+业务异常不得携带 HTTP 状态码、HTTP 响应类型等外部协议语义。
+
+Web 层负责将业务异常翻译为 HTTP `ProblemDetail`。
+
+未预期的技术异常继续向外传播，由 Web 边界统一兜底并转换为通用的服务器错误响应。
+
+依赖方向保持为：
+
+```text
+Domain / Application
+        ↓
+ BusinessException
+        ↓
+       Web
+        ↓
+HTTP ProblemDetail
+```
 
 这种边界使业务语义保持独立，避免 HTTP、数据库或第三方技术模型直接塑造 Domain 与模块公开契约。
 

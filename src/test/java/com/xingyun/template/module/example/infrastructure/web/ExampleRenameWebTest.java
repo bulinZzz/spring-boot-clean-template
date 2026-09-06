@@ -1,6 +1,7 @@
 package com.xingyun.template.module.example.infrastructure.web;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.xingyun.template.module.example.api.ExampleApi;
@@ -61,11 +62,14 @@ class ExampleRenameWebTest {
     }
 
     @Test
-    @DisplayName("同名拒绝（聚合不变量违规）返回 409")
-    void rename_should_return_409_when_same_name() throws Exception {
+    @DisplayName("同名拒绝返回 ProblemDetail 409")
+    void rename_should_return_problem_detail_when_same_name() throws Exception {
         mockMvc.perform(put("/examples/{id}", existingId.value())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"旧名称\"}"))
-                .andExpect(status().isConflict());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.title").value("Business Rule Violation"))
+                .andExpect(jsonPath("$.detail").value("新名称与当前名称相同"));
     }
 }
