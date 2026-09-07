@@ -6,7 +6,7 @@ import lombok.Getter;
 import java.util.Objects;
 
 /**
- * 示例聚合根：业务校验与状态变更内聚于此（充血模型，禁含框架注解）。
+ * 示例聚合根：业务校验与状态变更内聚于此。
  */
 @Getter
 public class ExampleModel {
@@ -22,7 +22,7 @@ public class ExampleModel {
     }
 
     /**
-     * 创建聚合根：新聚合无主键，由仓储 save 后回填。
+     * 创建聚合根：新聚合不携带主键。
      */
     public static ExampleModel create(String code, String name) {
         Objects.requireNonNull(code, "ExampleModel.create 的 code 不能为 null");
@@ -31,7 +31,7 @@ public class ExampleModel {
     }
 
     /**
-     * 从持久化状态重建聚合根：携带主键，供仓储实现还原聚合时调用。
+     * 从持久化状态重建聚合根，要求携带已有主键。
      */
     public static ExampleModel reconstitute(ExampleId id, String code, String name) {
         Objects.requireNonNull(id, "ExampleModel.reconstitute 的 id 不能为 null");

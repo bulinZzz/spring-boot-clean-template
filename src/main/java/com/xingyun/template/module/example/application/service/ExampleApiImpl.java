@@ -14,9 +14,6 @@ import java.util.Optional;
 
 /**
  * ExampleApi 的应用服务实现：编排用例流程，内聚契约 DTO ↔ 领域模型转换。
- *
- * <p>用例方法即事务边界：rename 为读改写用例，标注 {@code @Transactional}；
- * findById / create 为单步读写，无需标注。
  */
 @Service
 public class ExampleApiImpl implements ExampleApi {
@@ -49,7 +46,6 @@ public class ExampleApiImpl implements ExampleApi {
         return found.isPresent();
     }
 
-    // 契约 DTO ↔ 领域模型转换内聚于实现类，单向小映射不为它增设独立转换器
     private static ExampleResult toResult(ExampleModel model) {
         return new ExampleResult(model.getId(), model.getCode(), model.getName());
     }

@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.util.Objects;
 
 /**
- * 评论聚合根：业务校验与状态变更内聚于此（充血模型，禁含框架注解）。
+ * 评论聚合根：业务校验与状态变更内聚于此。
  *
  * <p>{@code exampleId} 以裸值持有对示例聚合的跨模块引用——对方模块的强类型标识
  * 不进入本模块领域，类型转换止于应用层。
@@ -24,7 +24,7 @@ public class CommentModel {
     }
 
     /**
-     * 创建评论：新聚合无主键，由仓储 save 后回填。
+     * 创建评论：新聚合不携带主键。
      */
     public static CommentModel create(Long exampleId, String content) {
         Objects.requireNonNull(exampleId, "CommentModel.create 的 exampleId 不能为 null");
@@ -33,7 +33,7 @@ public class CommentModel {
     }
 
     /**
-     * 从持久化状态重建评论：携带主键，供仓储实现还原聚合时调用。
+     * 从持久化状态重建评论：要求携带已有主键。
      */
     public static CommentModel reconstitute(CommentId id, Long exampleId, String content) {
         Objects.requireNonNull(id, "CommentModel.reconstitute 的 id 不能为 null");

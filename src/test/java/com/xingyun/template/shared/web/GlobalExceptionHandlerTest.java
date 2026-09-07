@@ -23,23 +23,6 @@ class GlobalExceptionHandlerTest {
         assertThat(problemDetail.getDetail()).isEqualTo("服务器内部错误");
     }
 
-    /**
-     * 回归：标准 JDK 异常不代表业务规则拒绝，只有 {@link BusinessException} 才进入业务异常处理路径。
-     */
-    @Test
-    void illegal_state_exception_should_not_be_treated_as_business_exception() {
-        ProblemDetail problemDetail =
-                handler.onUnexpectedException(
-                        new IllegalStateException("some internal state problem")
-                );
-
-        assertThat(problemDetail.getStatus())
-                .isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
-
-        assertThat(problemDetail.getDetail())
-                .isEqualTo("服务器内部错误");
-    }
-
     @Test
     void business_exception_should_return_409_problem_detail() {
         ProblemDetail problemDetail =

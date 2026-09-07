@@ -32,7 +32,7 @@ public class CommentRepositoryImpl implements CommentRepository {
         } else {
             commentMapper.updateById(po);
         }
-        return commentConverter.toDomain(po); // 转回领域模型，调用方拿到与存储一致的聚合状态
+        return commentConverter.toDomain(po);
     }
 
     @Override

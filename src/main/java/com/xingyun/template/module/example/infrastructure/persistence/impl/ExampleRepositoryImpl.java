@@ -39,6 +39,6 @@ public class ExampleRepositoryImpl implements ExampleRepository {
         } else {
             exampleMapper.updateById(po);
         }
-        return exampleConverter.toDomain(po); // 转回领域模型，调用方拿到与存储一致的聚合状态
+        return exampleConverter.toDomain(po);
     }
 }

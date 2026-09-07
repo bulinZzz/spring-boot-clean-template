@@ -4,7 +4,6 @@ import com.xingyun.template.module.comment.api.CommentApi;
 import com.xingyun.template.module.comment.api.CommentCreateCommand;
 import com.xingyun.template.module.comment.api.CommentQuery;
 import com.xingyun.template.module.comment.api.CommentResult;
-import com.xingyun.template.module.comment.domain.model.CommentId;
 import com.xingyun.template.module.comment.domain.model.CommentModel;
 import com.xingyun.template.module.comment.domain.repository.CommentRepository;
 import com.xingyun.template.module.example.api.ExampleApi;
@@ -16,9 +15,6 @@ import java.util.Optional;
 
 /**
  * CommentApi 的应用服务实现：编排用例流程，内聚契约 DTO ↔ 领域模型转换。
- *
- * <p>用例方法即事务边界：create（引用校验 + 单步写入）与 listByExample（单步只读）
- * 均为单步读写，无需标注 {@code @Transactional}。
  *
  * <p>跨模块仅依赖 {@code ExampleApi} 契约；{@code ExampleId} 是其契约签名引用的
  * 值语义类型，转换在本类完成后即止，不向模块内扩散。
@@ -52,7 +48,6 @@ public class CommentApiImpl implements CommentApi {
                 .toList();
     }
 
-    // 契约 DTO ↔ 领域模型转换内聚于实现类，单向小映射不为它增设独立转换器
     private static CommentResult toResult(CommentModel model) {
         return new CommentResult(model.getId(), model.getExampleId(), model.getContent());
     }
