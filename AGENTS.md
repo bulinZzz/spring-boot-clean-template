@@ -20,7 +20,7 @@
 
 实现方案按以下优先级确定：
 
-1. 优先参考 `module/example/`、`module/comment/` 等示例模块；新增代码时，优先阅读对应层的范例。
+1. 优先参考 `module/example/`、`module/comment/` 等示例模块；新增代码时，优先阅读对应层的示例代码。
 2. 示例无法覆盖时，根据本文档与 [ARCHITECTURE.md](./ARCHITECTURE.md) 的规则推理。
 3. 前两者无法确定时，再参考现有同类实现；现有实现不得视为架构规范或默认正确。
 
@@ -55,15 +55,7 @@
 
 本项目采用 Clean Architecture、Hexagonal Architecture 与依赖倒置原则。
 
-依赖方向必须保持向内收敛：
-
-```text
-Web / Infrastructure
-        ↓
-    Application
-        ↓
-      Domain
-```
+依赖方向必须保持向内收敛（Web / Infrastructure → Application → Domain，分层总览见 [ARCHITECTURE.md](./ARCHITECTURE.md)）。
 
 统一判据是**依赖封闭**：
 
@@ -176,25 +168,7 @@ Request / Response / VO 只在 HTTP 边界流转，Command / Query / Result 只�
 
 ### 3.5 模型隔离与转换
 
-不同层模型不得直接裸传，必须在边界处完成显式转换。
-
-典型关系：
-
-```text
-Request / Response
-        ↕
-     Assembler
-        ↕
-Command / Query / Result
-        ↕
-Application Service
-        ↕
-    Domain Model
-        ↕
-     Converter
-        ↕
-        PO
-```
+不同层模型不得直接裸传，必须在边界处完成显式转换；模型在各层间的典型流转关系见 [ARCHITECTURE.md](./ARCHITECTURE.md)。
 
 Web 模型与契约模型的转换由 Web Assembler 负责；契约模型与 Domain Model 的转换内聚于 Application Service；PO 与 Domain Model 的转换由 Persistence Converter 负责，不在 Repository 实现中直接完成。
 
@@ -464,7 +438,7 @@ public record OrderId(Long value) {
 
 ```text
 Agent 工作规则   → AGENTS.md
-架构规则         → ARCHITECTURE.md
+架构蓝图         → ARCHITECTURE.md
 使用说明         → README.md
 示例说明         → docs/examples.md
 局部设计意图     → 代码 / Javadoc

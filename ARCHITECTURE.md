@@ -7,11 +7,11 @@
 ### 分层与依赖方向
 
 ```text
-Web / Infrastructure / Integration
-                 ↓
-             Application
-                 ↓
-               Domain
+Web / Infrastructure
+        ↓
+    Application
+        ↓
+      Domain
 ```
 
 外层依赖内层，源码依赖方向向内收敛：
@@ -119,15 +119,7 @@ Application Service
 
 ### 异常边界
 
-业务层可以抛出与具体外部协议无关的业务异常，用于表达业务规则拒绝。
-
-`BusinessException` 是默认的业务异常类型。只有现有异常类型无法满足明确的差异化处理需求时，才允许新增异常类型。
-
-业务异常不得携带 HTTP 状态码、HTTP 响应类型等外部协议语义。
-
-Web 层负责将业务异常翻译为 HTTP `ProblemDetail`。
-
-未预期的技术异常继续向外传播，由 Web 边界统一兜底并转换为通用的服务器错误响应。
+业务规则拒绝在业务层以业务异常表达，异常本身与 HTTP 等外部协议无关；异常传播到 Web 边界后，业务异常翻译为 HTTP `ProblemDetail`，未预期的技术异常由 Web 边界统一兜底为通用服务器错误响应。异常类型的选择与使用规则见 `AGENTS.md`。
 
 依赖方向保持为：
 
@@ -173,8 +165,8 @@ HTTP ProblemDetail
 
 ## 5. 示例模块
 
-`module/example/` 是完整分层范例，供开发者和 AI 参考各层标准写法。
+`module/example/` 是完整分层示例，供开发者和 AI 参考各层标准写法。
 
 `module/comment/` 演示跨模块调用，仅依赖 `example/api` 中公开的契约及其稳定值语义类型。
 
-范例属于参考实现，可以整体删除；范例的介绍、使用及移除方式见 `docs/examples.md`。
+示例属于参考实现，可以整体删除；示例的介绍、使用及移除方式见 `docs/examples.md`。
