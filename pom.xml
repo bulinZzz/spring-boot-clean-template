@@ -17,7 +17,7 @@
     <packaging>jar</packaging>
 
     <name>spring-boot-clean-template</name>
-    <description>内置 AGENTS.md 的 Spring Boot 整洁架构模板，人与 AI 共用的架构红线。</description>
+    <description>面向生产的 Spring Boot 模板，带有 Clean Architecture、Hexagonal Architecture 和 AI 编码护栏。</description>
 
     <properties>
         <java.version>25</java.version>

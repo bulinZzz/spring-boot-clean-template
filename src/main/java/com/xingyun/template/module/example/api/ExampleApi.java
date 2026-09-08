@@ -5,7 +5,7 @@ import com.xingyun.template.module.example.domain.model.ExampleId;
 import java.util.Optional;
 
 /**
- * 示例模块对外契约：本模块全部对外能力的唯一视图（跨模块调用仅可依赖本包）。
+ * 示例模块对外契约：本模块全部对外能力的唯一视图。
  *
  * <p>单契约模式：本接口即应用服务接口，{@code @Service} 实现类位于
  * {@code application/service}，契约 DTO 与领域模型的转换内聚在实现类中。

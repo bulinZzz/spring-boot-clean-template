@@ -17,7 +17,7 @@ import lombok.Setter;
 @TableName("t_example")
 public class ExamplePO {
 
-    // 主键由数据库自增生成，insert 后由框架回填（不指定时 MyBatis-Plus 默认走雪花算法）
+    // 主键由数据库自增生成，insert 后由框架回填
     @TableId(type = IdType.AUTO)
     private Long id;
     private String code;

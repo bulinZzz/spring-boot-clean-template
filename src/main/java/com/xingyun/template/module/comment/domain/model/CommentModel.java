@@ -37,6 +37,8 @@ public class CommentModel {
      */
     public static CommentModel reconstitute(CommentId id, Long exampleId, String content) {
         Objects.requireNonNull(id, "CommentModel.reconstitute 的 id 不能为 null");
+        Objects.requireNonNull(exampleId, "CommentModel.reconstitute 的 exampleId 不能为 null");
+        Objects.requireNonNull(content, "CommentModel.reconstitute 的 content 不能为 null");
         return new CommentModel(id, exampleId, content);
     }
 }

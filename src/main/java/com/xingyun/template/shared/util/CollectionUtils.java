@@ -7,18 +7,14 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * 集合工具类 —— 全项目集合处理的唯一防腐层入口。
+ * 集合工具类：全项目集合处理的统一防腐层入口。
  *
- * <p>全项目禁止直接使用任何第三方 {@code CollectionUtils}，集合工具调用一律经由本类。
- * 底层委托 Spring Framework 的 {@code CollectionUtils}（spring-core 提供，无额外依赖），
- * 可整体替换而调用方零改动。本类中 {@code @Nullable} 参数即边界层的 null 容忍契约入口——
- * "null 容忍"是显式契约，而非隐式吞没；内部层调用须先经 {@code Objects.requireNonNull}
- * 快速失败，其后直接使用 JDK 原生方法。</p>
+ * <p>全项目禁止直接使用第三方 {@code CollectionUtils}，集合工具调用统一经由本类。
+ * 本类委托 Spring Framework 的 {@code CollectionUtils}，并对外明确声明 {@code null} 契约：
+ * 标注 {@code @Nullable} 的参数与返回值允许为 {@code null}，其余均非 {@code null}。
+ * 内部层调用须先经 {@code Objects.requireNonNull} 快速失败。</p>
  *
- * <p>方法集按需新增；当前判空族（Collection / Map × isEmpty / isNotEmpty）作为统一入口的基线占位，
- * 其余能力按实际需求新增——新增方法委托底层库同名实现，同步声明 null 契约并附中文 Javadoc。
- * 本类声明 {@link NullMarked}——除显式标注 {@code @Nullable} 的参数与返回值外，其余均视为非 {@code null}；
- * 无状态实现，线程安全。</p>
+ * <p>本类无状态且线程安全。</p>
  */
 @NullMarked
 public final class CollectionUtils {

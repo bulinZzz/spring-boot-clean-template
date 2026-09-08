@@ -35,6 +35,8 @@ public class ExampleModel {
      */
     public static ExampleModel reconstitute(ExampleId id, String code, String name) {
         Objects.requireNonNull(id, "ExampleModel.reconstitute 的 id 不能为 null");
+        Objects.requireNonNull(code, "ExampleModel.reconstitute 的 code 不能为 null");
+        Objects.requireNonNull(name, "ExampleModel.reconstitute 的 name 不能为 null");
         return new ExampleModel(id, code, name);
     }
 
