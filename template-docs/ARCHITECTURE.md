@@ -28,7 +28,7 @@ Web / Infrastructure
 系统按业务领域划分高层模块。每个模块内部按 `api / domain / application / infrastructure` 组织，`api` 是模块唯一公开面。
 
 ```text id="1d1k6y"
-com.xingyun.template
+com.xingyun.template                    // 模板根包，派生项目以实际包名为准
 ├── Application.java                    // Spring Boot 启动类，组件扫描覆盖全部模块
 │
 ├── shared
@@ -169,4 +169,4 @@ HTTP ProblemDetail
 
 `module/comment/` 演示跨模块调用，仅依赖 `example/api` 中公开的契约及其稳定值语义类型。
 
-示例属于参考实现，可以整体删除；示例的介绍、使用及移除方式见 `docs/examples.md`。
+示例属于参考实现，可以整体删除；示例的介绍、使用及移除方式见 `examples.md`。

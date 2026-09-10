@@ -73,7 +73,7 @@ http://localhost:8080/h2-console
 
 1. 删除两个模块的主代码与测试代码：`src/main/java` 与 `src/test/java` 下的 `module/example/`、`module/comment/` 目录（实际路径以当前根包为准）。
 2. 删除 `src/main/resources/schema.sql`——该脚本只服务示例的两张表。
-3. 删除本文档；若项目仍保留 H2 作为开发设施，可保留并裁剪 H2 相关章节。
+3. 删除本文档；`AGENTS.md` 文件头与 §1.2 中指向本文档的引用随之失效，属预期状态。若项目仍保留 H2 作为开发设施，可保留并裁剪 H2 相关章节。
 
 `ArchitectureTest` 与 `shared/` 下的通用设施不引用具体示例模块，无需改动。清理后执行 `mvn test` 确认构建通过。
 

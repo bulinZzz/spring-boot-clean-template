@@ -109,8 +109,7 @@ class ArchitectureTest {
             .should().dependOnClassesThat()
             .resideInAnyPackage(
                     MODULES + "..infrastructure.."
-            )
-            .allowEmptyShould(true);
+            );
 
     /**
      * Rule 6：模块之间只能通过公开契约依赖。
@@ -119,7 +118,7 @@ class ArchitectureTest {
      * 以及这些契约直接引用的稳定值语义类型。
      *
      * <p>当前以 record / enum 作为稳定值类型的机器可判定近似。
-     * 例如 ExampleApi 直接引用 ExampleId，因此 ExampleId 属于合法公开契约的一部分。
+     * 例如模块公开接口直接引用本模块的强类型标识时，该标识属于合法公开契约的一部分。
      */
     @ArchTest
     static void cross_module_dependencies_through_public_contract_only(

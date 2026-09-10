@@ -2,9 +2,8 @@
 
 > 本文件定义 AI Agent 在本仓库中的工作方式、架构边界与工程约束。AI Agent 在理解需求、架构设计、生成代码或重构前，必须遵守以下规则。
 >
-> 架构蓝图见 [ARCHITECTURE.md](./ARCHITECTURE.md)。
-> 项目使用方式、模板初始化与运行说明见 [README.md](./README.md)。
-> 示例模块及其用途见 [docs/examples.md](./docs/examples.md)。
+> 架构蓝图见 [ARCHITECTURE.md](./template-docs/ARCHITECTURE.md)。
+> 示例模块及其用途见 [template-docs/examples.md](./template-docs/examples.md)。
 
 ## 1. 工作方式
 
@@ -16,12 +15,12 @@
 
 不得覆盖、回退或清理用户已有修改。
 
-读取代码应按需增量进行：理解模块对外能力时，先阅读目标模块的 `api/`；修改模块内部时，再按 [ARCHITECTURE.md](./ARCHITECTURE.md) 的包结构定位相关实现与测试。
+读取代码应按需增量进行：理解模块对外能力时，先阅读目标模块的 `api/`；修改模块内部时，再按 [ARCHITECTURE.md](./template-docs/ARCHITECTURE.md) 的包结构定位相关实现与测试。
 
 实现方案按以下优先级确定：
 
 1. 优先参考 `module/example/`、`module/comment/` 等示例模块；新增代码时，优先阅读对应层的示例代码。
-2. 示例无法覆盖时，根据本文档与 [ARCHITECTURE.md](./ARCHITECTURE.md) 的规则推理。
+2. 示例无法覆盖时，根据本文档与 [ARCHITECTURE.md](./template-docs/ARCHITECTURE.md) 的规则推理。
 3. 前两者无法确定时，再参考现有同类实现；现有实现不得视为架构规范或默认正确。
 
 示例模块属于参考实现，可以被完整删除；示例不存在时，不应恢复示例代码作为前提。任务涉及具体文件时，应同时阅读其中与当前修改相关的注释和 Javadoc。
@@ -31,13 +30,14 @@
 不同信息来源的职责不同：
 
 * `AGENTS.md`：AI 工作规则与项目级工程约束。
-* `ARCHITECTURE.md`：架构分层、依赖方向与包结构。
+* `template-docs/ARCHITECTURE.md`：架构分层、依赖方向与包结构。
+* `template-docs/examples.md`：示例模块说明。
 * 代码与 Javadoc：当前实现的局部事实与设计意图。
 * 测试：当前行为的可执行约束。
-* `README.md`：项目使用与运行说明。
-* `docs/examples.md`：示例模块说明。
 
-架构判断以 `AGENTS.md` 与 `ARCHITECTURE.md` 的判据为准，代码不得反向定义架构规则；当前行为以代码和测试为事实依据。
+架构判断以 `AGENTS.md` 与 `template-docs/ARCHITECTURE.md` 的判据为准，代码不得反向定义架构规则；当前行为以代码和测试为事实依据。
+
+`template-docs/` 属于模板上下文，随模板演进而更新；所在项目自有的 `README.md`、根目录 `ARCHITECTURE.md` 及其他项目文档属于项目上下文，用于描述该项目自身架构，可细化但不放宽本文档的架构约束。
 
 当规范、实现和测试存在不一致时，应识别实际冲突并保持修改范围可控，不得通过猜测掩盖冲突。
 
@@ -55,7 +55,7 @@
 
 本项目采用 Clean Architecture、Hexagonal Architecture 与依赖倒置原则。
 
-依赖方向必须保持向内收敛（Web / Infrastructure → Application → Domain，分层总览见 [ARCHITECTURE.md](./ARCHITECTURE.md)）。
+依赖方向必须保持向内收敛（Web / Infrastructure → Application → Domain，分层总览见 [ARCHITECTURE.md](./template-docs/ARCHITECTURE.md)）。
 
 统一判据是**依赖封闭**：
 
@@ -168,7 +168,7 @@ Request / Response / VO 只在 HTTP 边界流转，Command / Query / Result 只�
 
 ### 3.5 模型隔离与转换
 
-不同层模型不得直接裸传，必须在边界处完成显式转换；模型在各层间的典型流转关系见 [ARCHITECTURE.md](./ARCHITECTURE.md)。
+不同层模型不得直接裸传，必须在边界处完成显式转换；模型在各层间的典型流转关系见 [ARCHITECTURE.md](./template-docs/ARCHITECTURE.md)。
 
 Web 模型与契约模型的转换由 Web Assembler 负责；契约模型与 Domain Model 的转换内聚于 Application Service；PO 与 Domain Model 的转换由 Persistence Converter 负责，不在 Repository 实现中直接完成。
 
@@ -438,9 +438,8 @@ public record OrderId(Long value) {
 
 ```text
 Agent 工作规则   → AGENTS.md
-架构蓝图         → ARCHITECTURE.md
-使用说明         → README.md
-示例说明         → docs/examples.md
+架构蓝图         → template-docs/ARCHITECTURE.md
+示例说明         → template-docs/examples.md
 局部设计意图     → 代码 / Javadoc
 行为约束         → 测试
 ```
