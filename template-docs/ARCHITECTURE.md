@@ -169,4 +169,4 @@ HTTP ProblemDetail
 
 `module/comment/` 演示跨模块调用，仅依赖 `example/api` 中公开的契约及其稳定值语义类型。
 
-示例属于参考实现，可以整体删除；示例的介绍、使用及移除方式见 `examples.md`。
+示例属于参考实现，可以整体删除；介绍、试用与移除方式见 `derivation.md`。

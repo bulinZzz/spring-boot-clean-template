@@ -2,7 +2,6 @@ package com.xingyun.template.module.comment.infrastructure.web.controller;
 
 import com.xingyun.template.module.comment.api.CommentApi;
 import com.xingyun.template.module.comment.api.CommentCreateCommand;
-import com.xingyun.template.module.comment.api.CommentResult;
 import com.xingyun.template.module.comment.infrastructure.web.assembler.CommentAssembler;
 import com.xingyun.template.module.comment.infrastructure.web.request.CommentCreateRequest;
 import com.xingyun.template.module.comment.infrastructure.web.response.CommentResponse;

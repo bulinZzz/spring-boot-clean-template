@@ -2,8 +2,7 @@
 
 > 本文件定义 AI Agent 在本仓库中的工作方式、架构边界与工程约束。AI Agent 在理解需求、架构设计、生成代码或重构前，必须遵守以下规则。
 >
-> 架构蓝图见 [ARCHITECTURE.md](./template-docs/ARCHITECTURE.md)。
-> 示例模块及其用途见 [template-docs/examples.md](./template-docs/examples.md)。
+> 架构蓝图见 [template-docs/ARCHITECTURE.md](./template-docs/ARCHITECTURE.md)，派生流程与示例说明见 [template-docs/derivation.md](./template-docs/derivation.md)；二者属于模板上下文，上下文划分与权威来源见 §1.2 与 §8。
 
 ## 1. 工作方式
 
@@ -30,14 +29,16 @@
 不同信息来源的职责不同：
 
 * `AGENTS.md`：AI 工作规则与项目级工程约束。
-* `template-docs/ARCHITECTURE.md`：架构分层、依赖方向与包结构。
-* `template-docs/examples.md`：示例模块说明。
+* 模板上下文（`template-docs/`）：模板的架构蓝图、依赖方向、包结构与示例说明。
+* 项目上下文（项目自有的 `README.md`、架构与工程文档等）：当前项目的组成、协作方式与实现事实。
 * 代码与 Javadoc：当前实现的局部事实与设计意图。
 * 测试：当前行为的可执行约束。
 
-架构判断以 `AGENTS.md` 与 `template-docs/ARCHITECTURE.md` 的判据为准，代码不得反向定义架构规则；当前行为以代码和测试为事实依据。
+架构判断以 `AGENTS.md` 与 [template-docs/ARCHITECTURE.md](./template-docs/ARCHITECTURE.md) 的判据为准，代码不得反向定义架构规则；当前行为以代码和测试为事实依据。
 
-`template-docs/` 属于模板上下文，随模板演进而更新；所在项目自有的 `README.md`、根目录 `ARCHITECTURE.md` 及其他项目文档属于项目上下文，用于描述该项目自身架构，可细化但不放宽本文档的架构约束。
+模板上下文描述模板自身的设计与用法，随模板演进而更新，不代表派生项目的当前事实；项目上下文描述当前项目自身，可细化但不放宽本文档的架构约束。
+
+两类上下文可以并存，职责不同：同一事实只在其中一个上下文中描述，不在两处重复。判断“这套架构如何工作”读模板上下文，判断“当前项目如何实现”读项目上下文。派生项目建立项目上下文后，不需要继续修改模板上下文，模板上下文整体保留或整体移除皆可。
 
 当规范、实现和测试存在不一致时，应识别实际冲突并保持修改范围可控，不得通过猜测掩盖冲突。
 
@@ -307,7 +308,23 @@ mvn clean package
 
 能够自动验证的内容应优先自动验证。
 
-### 6.4 任务收尾审计
+### 6.4 运行时冒烟验证
+
+测试通过不等于应用可以按真实方式运行：测试与真实启动在 classpath 组装、配置加载与资源加载上并不等价。
+
+存在下列变更时，除自动化测试外应做一次运行时冒烟验证：
+
+* 修改资源文件、配置或数据库初始化
+* 修改启动流程、Web 层或外部系统集成
+* 修改依赖
+* 派生项目初始化
+* 发布前
+
+验证方式为：启动应用并确认启动成功，执行一次真实调用，确认结果符合预期。
+
+其他变更仍按影响范围选择验证方式，不要求每次修改都启动完整应用。
+
+### 6.5 任务收尾审计
 
 编码完成不是任务完成的标志。收尾时应审计本次变更对 §2–§5 以及 §7 的遵循情况，并确认 §6 所要求的验证已经完成；发现问题应修复后重新验证。
 
@@ -438,8 +455,8 @@ public record OrderId(Long value) {
 
 ```text
 Agent 工作规则   → AGENTS.md
-架构蓝图         → template-docs/ARCHITECTURE.md
-示例说明         → template-docs/examples.md
+模板上下文       → template-docs/
+项目上下文       → 项目自有的 README.md、架构与工程文档
 局部设计意图     → 代码 / Javadoc
 行为约束         → 测试
 ```
