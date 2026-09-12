@@ -1,60 +1,57 @@
 # spring-boot-clean-template
 
-以 **整洁架构（Clean Architecture）、六边形架构（Hexagonal Architecture）与依赖倒置原则（DIP）** 为基础的 Spring Boot 项目模板。
+一个面向长期维护与 AI 辅助开发的 Spring Boot 项目模板。
 
-模板将业务模型与 Web、数据库、第三方服务等技术细节隔离，并通过明确的模块边界与模型边界降低耦合。项目同时提供面向 AI Agent 的 `AGENTS.md`，使人工开发与 AI 辅助开发遵循同一套工程约束。
+基于 **整洁架构（Clean Architecture）、六边形架构（Hexagonal Architecture）与依赖倒置原则（DIP）**，通过清晰的模块边界与依赖方向，减少业务代码与 Web、数据库、第三方服务等技术细节之间的耦合。
 
-## 适用场景
+同时提供一套可独立使用的 `AGENTS.md`，用于约束 AI Agent 的编码方式。
 
-适合需要长期维护、强调模块边界，并使用 AI 辅助编码的 Spring Boot 项目。
+## 为什么做这个模板？
 
-不适合以简单 CRUD 为主、架构边界带来的收益有限的小型项目。此类项目使用更简单的脚手架通常更合适。
+Spring Boot 很容易开始，但随着业务增长，代码边界往往会逐渐变得模糊。
+
+AI 可以让代码生成更快，但并不会自动保证架构始终清晰。
+
+这个模板希望提供一个稳定的项目起点，让**人工开发和 AI 辅助开发都遵循同一套边界与约束**。
 
 ## 技术栈
 
-* Java 25
-* Spring Boot 4.1.1
-* MyBatis-Plus
-* Lombok
-* H2
-* Maven
-* JUnit 5
-* ArchUnit
+Java 25 · Spring Boot 4.1.1 · MyBatis-Plus · H2 · Maven · JUnit 5 · ArchUnit
 
-H2 仅作为模板示例的内存数据库，便于项目开箱运行，不代表生产环境的数据库选型。
+## 怎么开始？
 
-## 快速开始
+这个模板有两种使用方式。
 
-### 1. 创建项目
+### 1. 使用完整模板
 
-在 GitHub 中点击 **Use this template**，基于本仓库创建新的项目仓库。
+适合准备开始一个新的 Spring Boot 项目。
 
-本文件在模板仓库中描述模板自身；派生项目可将其替换为项目自身的说明，并在根目录建立自己的 `ARCHITECTURE.md`，模板提供的架构蓝图与示例说明保留在 `template-docs/`。
+在 GitHub 中点击 **Use this template** 创建项目，然后：
 
-### 2. 修改根包名
+1. 修改项目名称、包名等项目标识
+2. 根据实际业务移除模板示例
+3. 开始开发
 
-将示例根包 `com.xingyun.template` 重命名为实际项目包名，并同步调整对应目录。
+模板中的示例模块可以帮助你快速理解基本的项目组织方式。
 
-全局搜索 `com.xingyun.template`，同步修改项目中的硬编码。
+创建项目后的具体清理与派生步骤：
 
-### 3. 运行与验证
+[`template-docs/derivation.md`](./template-docs/derivation.md)
 
-```bash
-mvn spring-boot:run    # 启动应用（内置 H2 内存库，无需预装数据库）
-mvn test               # 运行测试
-mvn clean package      # 执行完整构建
-```
+### 2. 只使用 `AGENTS.md`
 
-### 4. 开始开发
+适合已经存在 Spring Boot 项目，只希望引入一套 AI 编码规范的情况。
 
-模板内置两个用于说明架构的示例模块：`module/example/`（完整分层示例）与 `module/comment/`（跨模块调用示例）。
+直接复制：
 
-示例属于教学参考，可按需整体移除；运行方式与移除步骤见 [template-docs/examples.md](./template-docs/examples.md)。
+[`AGENTS.md`](./AGENTS.md)
+
+它不依赖本仓库的其他文件，可以独立放入新的项目中使用。
 
 ## 文档导航
 
-| 文档                                                               | 内容                             | 适合谁                    |
-| ---------------------------------------------------------------- | ------------------------------ | ---------------------- |
-| [template-docs/ARCHITECTURE.md](./template-docs/ARCHITECTURE.md) | 架构总则、模块与包结构、依赖与边界、设计取舍         | 所有开发者                  |
-| [AGENTS.md](./AGENTS.md)                                         | AI 工作规则、架构约束、工程规则、测试验证与编码约定    | AI Agent 与使用 AI 开发的开发者 |
-| [template-docs/examples.md](./template-docs/examples.md)         | 示例模块、H2 数据库的介绍、运行和移除           | 需要运行或清理模板示例的开发者        |
+| 文档                                                                                   | 说明                  |
+| ------------------------------------------------------------------------------------ | ------------------- |
+| [`AGENTS.md`](./AGENTS.md)                                                           | AI Agent 的工作规则与工程约束 |
+| [`template-docs/TEMPLATE-ARCHITECTURE.md`](./template-docs/TEMPLATE-ARCHITECTURE.md) | 模板的架构蓝图与结构说明        |
+| [`template-docs/derivation.md`](./template-docs/derivation.md)                       | 使用模板创建新项目后的派生指南     |
