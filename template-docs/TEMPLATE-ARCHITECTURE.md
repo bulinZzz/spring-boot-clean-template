@@ -119,21 +119,20 @@ Application Service
 
 ### 异常边界
 
-业务异常表达业务语义，异常本身不携带 HTTP 等外部协议语义；异常传播到 Web 边界后，业务异常翻译为 HTTP `ProblemDetail`，未预期的技术异常由 Web 边界统一兜底为通用服务器错误响应。异常类型的选择与使用规则见 `AGENTS.md`。
-
-依赖方向保持为：
+业务失败语义属于业务边界，异常本身不携带 HTTP 等外部协议语义；只有需要被调用方区分处理的稳定失败，才形成公开的异常契约，位于模块 `api/`，由模块自己的 Web 翻译器映射到 HTTP `ProblemDetail`。与具体业务无关、可跨模块复用的通用异常类别位于 `shared/exception`；未预期的技术异常由通用翻译器兜底为通用服务器错误响应。
 
 ```text
-Domain / Application
-        ↓
- BusinessException
-        ↓
-       Web
-        ↓
-HTTP ProblemDetail
+module/<name>/api          shared/exception
+ 公开失败语义                 通用异常类别
+       │                          │
+       ↓                          ↓
+模块 Web 翻译器            shared/web 通用翻译器
+       └────────────┬─────────────┘
+                    ↓
+            HTTP ProblemDetail
 ```
 
-这种边界使业务语义保持独立，避免 HTTP、数据库或第三方技术模型直接塑造 Domain 与模块公开契约。
+这种边界使业务语义保持独立，避免 HTTP、数据库或第三方技术模型直接塑造 Domain 与模块公开契约。异常的归属判据与翻译器顺序约束见 `AGENTS.md`。
 
 ## 4. 设计取舍
 

@@ -48,7 +48,9 @@ my-project/
     run: mvn -B test
   ```
 
-* **开发工具：** Maven 项目移动后，需要让所使用的 IDE 或开发工具重新识别新的 `pom.xml` 位置。以 IntelliJ IDEA 为例，可在 Maven 工具窗口中重新加载或添加新的 `pom.xml`。
+* **开发工具：** Maven 项目移动到子目录后，IDE 可能不会自动识别新的 `pom.xml`。需要重新导入该 Maven 项目。
+
+  例如在 IntelliJ IDEA 中，可以打开或右键 `backend/pom.xml`，选择将其作为 Maven 项目导入。
 
 * **本地命令：** 原本在仓库根目录执行的 Maven 命令需要改为在新的 Maven 项目目录执行，例如：
 
